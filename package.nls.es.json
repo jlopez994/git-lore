@@ -1,0 +1,23 @@
+{
+  "displayName": "Git Lore",
+  "description": "Blame de Git, historial de fichero y de líneas, grafo de commits y comparación de ramas, libres y gratis. Sin cuenta ni muro de pago.",
+  "command.toggleFileBlame": "Alternar blame del fichero",
+  "command.toggleCurrentLine": "Alternar blame de la línea actual",
+  "command.fileHistory": "Ver historial del fichero",
+  "command.lineHistory": "Ver historial de las líneas",
+  "command.refresh": "Actualizar",
+  "command.showGraph": "Ver grafo de commits",
+  "command.compareRefs": "Comparar ramas o refs…",
+  "command.swapCompare": "Intercambiar lados",
+  "command.showCommit": "Ver ficheros del commit",
+  "command.copySha": "Copiar SHA del commit",
+  "command.openOnRemote": "Abrir commit en el remoto",
+  "command.openChanges": "Abrir cambios",
+  "view.history": "Historial del fichero",
+  "view.compare": "Comparar",
+  "welcome.compare": "Compara dos ramas, tags o commits, o una ref con tu árbol de trabajo.\n[Comparar…](command:gitLore.compareRefs)",
+  "color.currentLine": "Color del blame al final de la línea actual.",
+  "color.fileBlame": "Color del texto de la columna de blame del fichero.",
+  "color.fileBlameBackground": "Fondo de la columna de blame del fichero.",
+  "config.currentLine": "Muestra al final de la línea actual quién la cambió por última vez y cuándo."
+}

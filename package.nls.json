@@ -1,0 +1,23 @@
+{
+  "displayName": "Git Lore",
+  "description": "Free and open-source Git blame, file and line history, commit graph and branch comparison. No account, no paywall.",
+  "command.toggleFileBlame": "Toggle File Blame",
+  "command.toggleCurrentLine": "Toggle Current Line Blame",
+  "command.fileHistory": "Show File History",
+  "command.lineHistory": "Show Line History",
+  "command.refresh": "Refresh",
+  "command.showGraph": "Show Commit Graph",
+  "command.compareRefs": "Compare Branches or Refs…",
+  "command.swapCompare": "Swap Sides",
+  "command.showCommit": "Show Commit Files",
+  "command.copySha": "Copy Commit SHA",
+  "command.openOnRemote": "Open Commit on Remote",
+  "command.openChanges": "Open Changes",
+  "view.history": "File History",
+  "view.compare": "Compare",
+  "welcome.compare": "Compare two branches, tags or commits, or a ref with your working tree.\n[Compare…](command:gitLore.compareRefs)",
+  "color.currentLine": "Color of the blame shown at the end of the current line.",
+  "color.fileBlame": "Text color of the file blame column.",
+  "color.fileBlameBackground": "Background of the file blame column.",
+  "config.currentLine": "Show who last changed the current line, and when, at the end of the line."
+}

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2B1F5C"/>
+      <stop offset="1" stop-color="#120E26"/>
+    </linearGradient>
+    <linearGradient id="calor" gradientUnits="userSpaceOnUse" x1="0" y1="212" x2="0" y2="44">
+      <stop offset="0" stop-color="#4C7DFF"/>
+      <stop offset="0.55" stop-color="#B26BFF"/>
+      <stop offset="1" stop-color="#FF9A3D"/>
+    </linearGradient>
+    <radialGradient id="brillo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFB869" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#FFB869" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#fondo)"/>
+  <!-- columna de blame: franjas con el mapa de calor -->
+  <g opacity="0.9">
+    <rect x="44" y="52" width="8" height="34" rx="4" fill="#FF9A3D"/>
+    <rect x="44" y="94" width="8" height="22" rx="4" fill="#D97BFF"/>
+    <rect x="44" y="124" width="8" height="40" rx="4" fill="#8A6BFF"/>
+    <rect x="44" y="172" width="8" height="32" rx="4" fill="#4C7DFF"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-width="14">
+    <path d="M104 212V44" stroke="url(#calor)"/>
+    <path d="M104 176C104 140 176 150 176 112V84" stroke="#7FD1FF"/>
+  </g>
+  <circle cx="176" cy="74" r="40" fill="url(#brillo)"/>
+  <g stroke="#120E26" stroke-width="7">
+    <circle cx="104" cy="196" r="17" fill="#4C7DFF"/>
+    <circle cx="104" cy="128" r="17" fill="#B26BFF"/>
+    <circle cx="104" cy="60" r="17" fill="#FF9A3D"/>
+    <circle cx="176" cy="78" r="19" fill="#FFD29A"/>
+  </g>
+</svg>
