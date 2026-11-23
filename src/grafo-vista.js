@@ -189,6 +189,19 @@ function registrar(context, protegido) {
     if (!repo) { return vscode.window.showWarningMessage(t('No git repository is open')); }
     abrir(context, repo);
   })));
+
+  // como el de Git Graph: un clic en la barra de estado abre el grafo del repo activo
+  const boton = vscode.window.createStatusBarItem('gitLore.graph', vscode.StatusBarAlignment.Left);
+  boton.name = t('Commit Graph');
+  boton.text = `$(git-merge) ${t('Graph')}`;
+  boton.tooltip = t('Show Commit Graph');
+  boton.command = 'gitLore.showGraph';
+  context.subscriptions.push(boton);
+  git.obtenerApi().then(api => {
+    const ver = () => (api.repositories.length ? boton.show() : boton.hide());
+    context.subscriptions.push(api.onDidOpenRepository(ver), api.onDidCloseRepository(ver));
+    ver();
+  }, () => { }); // sin la extensión git no hay grafo que abrir: el botón no se enseña
 }
 
 module.exports = { registrar };
