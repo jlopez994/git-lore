@@ -88,8 +88,16 @@ async function ficherosDeCommit(repo, sha) {
   return commit;
 }
 
-async function grafo(repo, { saltar = 0, limite = 300 } = {}) {
-  const args = ['log', '--exclude=refs/stash', '--all', '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
+// ramas, remotas y tags, no --all: dejaría fuera los stash, notas y checkpoints de otras herramientas (refs/t3/…)
+// sin las remotas también se quitan sus insignias: %D decora con todas las refs
+const ALCANCES = {
+  todas: ['--branches', '--remotes', '--tags', 'HEAD'],
+  locales: ['--branches', '--tags', 'HEAD', '--decorate-refs-exclude=refs/remotes'],
+  actual: ['HEAD'],
+};
+
+async function grafo(repo, { saltar = 0, limite = 300, alcance = 'todas' } = {}) {
+  const args = ['log', ...ALCANCES[alcance], '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args));
 }
 
@@ -132,6 +140,6 @@ function uriEnRevision(repo, ruta, ref) {
 }
 
 module.exports = {
-  obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
+  ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
   uriEnRevision, ErrorGit,
 };

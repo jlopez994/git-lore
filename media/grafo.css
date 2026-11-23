@@ -15,6 +15,8 @@
 }
 
 * { box-sizing: border-box; }
+/* .fila y .detalle fijan display y anularían el hidden del filtro */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -51,7 +53,20 @@ body {
   font: inherit;
   transition: border-color .15s ease-out, box-shadow .15s ease-out;
 }
-#buscar:focus { outline: none; border-color: var(--vscode-focusBorder); box-shadow: 0 0 0 1px var(--vscode-focusBorder); }
+#buscar:focus, #alcance:focus { outline: none; border-color: var(--vscode-focusBorder); box-shadow: 0 0 0 1px var(--vscode-focusBorder); }
+
+#alcance {
+  flex: none;
+  height: 28px;
+  padding: 0 6px;
+  color: var(--vscode-dropdown-foreground);
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border, transparent);
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .15s ease-out, box-shadow .15s ease-out;
+}
 
 .cuenta { color: var(--suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
@@ -108,6 +123,9 @@ body {
 .nodo { stroke: var(--vscode-editor-background); stroke-width: 2; transition: r .2s var(--muelle); }
 .nodo.head { stroke: var(--vscode-foreground); }
 .fila:hover .nodo { r: 6; }
+.nodo.pendiente { fill: var(--vscode-editor-background); stroke-width: 2; stroke-dasharray: 3 2; }
+.nodo.pendiente.c0 { stroke: var(--c0); }
+.fila.pendiente .resumen { color: var(--suave); font-style: italic; }
 
 .c0 { stroke: var(--c0); } .nodo.c0 { fill: var(--c0); }
 .c1 { stroke: var(--c1); } .nodo.c1 { fill: var(--c1); }
@@ -119,7 +137,7 @@ body {
 .c7 { stroke: var(--c7); } .nodo.c7 { fill: var(--c7); }
 .nodo.head { stroke: var(--vscode-foreground); }
 
-.texto { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
 .resumen { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autor, .fecha { overflow: hidden; color: var(--suave); text-overflow: ellipsis; white-space: nowrap; }
 .seleccionada .autor, .seleccionada .fecha { color: inherit; opacity: .85; }
@@ -154,7 +172,7 @@ body {
   cursor: copy;
 }
 .sha:hover { background: var(--vscode-toolbar-hoverBackground); }
-.sha.copiado::after {
+.sha.copiado::after, .enlace.copiado::after {
   content: attr(data-texto);
   position: absolute;
   right: 0;
@@ -174,7 +192,93 @@ body {
   100% { opacity: 0; transform: translateY(-4px); }
 }
 
-.filtrando .grafo { display: none; }
+.fila[aria-expanded='true'] .resumen { font-weight: 600; }
+
+.detalle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 12px 0 8px;
+  background: color-mix(in srgb, var(--vscode-list-activeSelectionBackground) 12%, var(--vscode-editor-background));
+  border-bottom: 1px solid var(--borde);
+  animation: desplegar .22s var(--salida) both;
+}
+@keyframes desplegar { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.carriles { display: block; height: 100%; overflow: visible; }
+.carriles line { stroke-width: 2; stroke-linecap: round; }
+
+.cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 10px 0 12px;
+}
+.cuerpo.cargando { min-height: 72px; }
+.cuerpo.cargando::before {
+  content: '';
+  grid-column: 1 / -1;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--borde) 0%, transparent 50%, var(--borde) 100%) 0 0 / 200% 100%;
+  animation: brillo 1.2s linear infinite;
+}
+.cuerpo > * { animation: entrar .2s var(--salida) both; }
+.ficheros { animation-delay: 60ms; }
+
+.mensaje {
+  margin: 0 0 8px;
+  font-family: var(--vscode-editor-font-family);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mensaje::first-line { font-weight: 600; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 8px; color: var(--suave); }
+.padres { font-family: var(--vscode-editor-font-family); }
+.acciones { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.enlace {
+  position: relative;
+  min-height: 24px;
+  padding: 2px 8px;
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  border: 1px solid var(--vscode-button-border, var(--borde));
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+  transition: background .15s ease-out, transform .2s var(--muelle);
+}
+.enlace:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.enlace:active { transform: scale(.95); }
+
+.ficheros { max-height: 280px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.fichero {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  min-height: 24px;
+  padding: 2px 6px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .12s ease-out;
+}
+.fichero:hover { background: var(--vscode-list-hoverBackground); }
+.fichero:focus-visible, .enlace:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+.estado { flex: none; width: 1.2em; font-family: var(--vscode-editor-font-family); font-weight: 600; text-align: center; }
+.eA .estado { color: var(--vscode-gitDecoration-addedResourceForeground, var(--c2)); }
+.eM .estado { color: var(--vscode-gitDecoration-modifiedResourceForeground, var(--c1)); }
+.eD .estado { color: var(--vscode-gitDecoration-deletedResourceForeground, var(--c4)); }
+.eR .estado, .eC .estado { color: var(--vscode-gitDecoration-renamedResourceForeground, var(--c6)); }
+.nombre { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ruta { min-width: 0; overflow: hidden; color: var(--suave); font-size: .9em; text-overflow: ellipsis; white-space: nowrap; }
+
+.filtrando .grafo, .filtrando .carriles { display: none; }
+.filtrando .detalle { grid-template-columns: minmax(0, 1fr); padding-left: 12px; }
 .filtrando .fila { grid-template-columns: minmax(0, 1fr) minmax(0, 11em) 9em 5.5em; padding-left: 12px; }
 
 .esqueleto { cursor: default; animation: none; }
@@ -194,6 +298,8 @@ body {
   .fila, .filtrando .fila { grid-template-columns: auto minmax(0, 1fr) 5.5em; }
   .filtrando .fila { grid-template-columns: minmax(0, 1fr) 5.5em; }
   .autor, .fecha { display: none; }
+  .cuerpo { grid-template-columns: minmax(0, 1fr); }
+  #alcance { max-width: 9em; }
 }
 
 @media (prefers-reduced-motion: reduce) {
