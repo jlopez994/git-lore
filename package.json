@@ -1,0 +1,320 @@
+{
+  "name": "git-lore",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.1.0",
+  "publisher": "jlopez",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jlopez994/git-lore.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jlopez994/git-lore/issues"
+  },
+  "homepage": "https://github.com/jlopez994/git-lore#readme",
+  "author": "Julián L.",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1A1530",
+    "theme": "dark"
+  },
+  "categories": [
+    "SCM Providers",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "blame",
+    "history",
+    "file history",
+    "line history",
+    "commit graph",
+    "compare",
+    "open source"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "main": "./extension.js",
+  "l10n": "./l10n",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^4.1.1",
+    "ovsx": "^1.4.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitLore.toggleFileBlame",
+        "title": "%command.toggleFileBlame%",
+        "category": "Git Lore",
+        "icon": "$(person)"
+      },
+      {
+        "command": "gitLore.toggleCurrentLine",
+        "title": "%command.toggleCurrentLine%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.fileHistory",
+        "title": "%command.fileHistory%",
+        "category": "Git Lore",
+        "icon": "$(history)"
+      },
+      {
+        "command": "gitLore.lineHistory",
+        "title": "%command.lineHistory%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.refreshHistory",
+        "title": "%command.refresh%",
+        "category": "Git Lore",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitLore.showGraph",
+        "title": "%command.showGraph%",
+        "category": "Git Lore",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "gitLore.compareRefs",
+        "title": "%command.compareRefs%",
+        "category": "Git Lore",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "gitLore.swapCompare",
+        "title": "%command.swapCompare%",
+        "category": "Git Lore",
+        "icon": "$(arrow-swap)"
+      },
+      {
+        "command": "gitLore.showCommit",
+        "title": "%command.showCommit%",
+        "category": "Git Lore",
+        "icon": "$(files)"
+      },
+      {
+        "command": "gitLore.copySha",
+        "title": "%command.copySha%",
+        "category": "Git Lore",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "gitLore.openOnRemote",
+        "title": "%command.openOnRemote%",
+        "category": "Git Lore",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "gitLore.openChanges",
+        "title": "%command.openChanges%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.openComparedFile",
+        "title": "%command.openChanges%",
+        "category": "Git Lore"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "gitLore.showCommit",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.copySha",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.openOnRemote",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.openChanges",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.openComparedFile",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.swapCompare",
+          "when": "gitLore.comparing"
+        },
+        {
+          "command": "gitLore.toggleFileBlame",
+          "when": "resourceScheme == file"
+        },
+        {
+          "command": "gitLore.lineHistory",
+          "when": "editorTextFocus && resourceScheme == file"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "gitLore.toggleFileBlame",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "navigation@90"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "gitLore.fileHistory",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "gitLore@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "gitLore.lineHistory",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "gitLore@1"
+        },
+        {
+          "command": "gitLore.toggleFileBlame",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "gitLore@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "gitLore.fileHistory",
+          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "group": "gitLore@1"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "gitLore.showGraph",
+          "when": "scmProvider == git",
+          "group": "navigation@-3"
+        },
+        {
+          "command": "gitLore.compareRefs",
+          "when": "scmProvider == git",
+          "group": "gitLore@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "gitLore.refreshHistory",
+          "when": "view == gitLore.history",
+          "group": "navigation"
+        },
+        {
+          "command": "gitLore.swapCompare",
+          "when": "view == gitLore.compare && gitLore.comparing",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitLore.compareRefs",
+          "when": "view == gitLore.compare",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "gitLore.showCommit",
+          "when": "view == gitLore.history && viewItem == commit",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitLore.showCommit",
+          "when": "view == gitLore.history && viewItem == commit",
+          "group": "1_commit@1"
+        },
+        {
+          "command": "gitLore.copySha",
+          "when": "view == gitLore.history && viewItem == commit",
+          "group": "1_commit@2"
+        },
+        {
+          "command": "gitLore.openOnRemote",
+          "when": "view == gitLore.history && viewItem == commit",
+          "group": "1_commit@3"
+        }
+      ]
+    },
+    "views": {
+      "scm": [
+        {
+          "id": "gitLore.history",
+          "name": "%view.history%",
+          "icon": "$(history)"
+        },
+        {
+          "id": "gitLore.compare",
+          "name": "%view.compare%",
+          "icon": "$(git-compare)"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gitLore.compare",
+        "contents": "%welcome.compare%",
+        "when": "!gitLore.comparing"
+      }
+    ],
+    "colors": [
+      {
+        "id": "gitLore.currentLineForeground",
+        "description": "%color.currentLine%",
+        "defaults": {
+          "dark": "#99999980",
+          "light": "#77777799",
+          "highContrast": "#ffffffaa",
+          "highContrastLight": "#000000aa"
+        }
+      },
+      {
+        "id": "gitLore.fileBlameForeground",
+        "description": "%color.fileBlame%",
+        "defaults": {
+          "dark": "#a0a0a0",
+          "light": "#6a6a6a",
+          "highContrast": "#ffffff",
+          "highContrastLight": "#000000"
+        }
+      },
+      {
+        "id": "gitLore.fileBlameBackground",
+        "description": "%color.fileBlameBackground%",
+        "defaults": {
+          "dark": "#ffffff08",
+          "light": "#0000000a",
+          "highContrast": "#00000000",
+          "highContrastLight": "#00000000"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Git Lore",
+      "properties": {
+        "gitLore.currentLine.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.currentLine%"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+.git/**
+.gitignore
+.github/**
+.claude/**
+test/**
+scripts/**
+node_modules/**
+*.vsix
+images/*.svg
