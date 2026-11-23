@@ -97,6 +97,8 @@ const ALCANCES = {
 };
 
 async function grafo(repo, { saltar = 0, limite = 300, alcance = 'todas' } = {}) {
+  // repo recién creado: «git log HEAD» fallaría con «unknown revision»
+  if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
   const args = ['log', ...ALCANCES[alcance], '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args));
 }

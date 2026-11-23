@@ -115,6 +115,8 @@
     const q = buscar.value.trim().toLowerCase();
     let visibles = 0;
     for (const r of lista.querySelectorAll('.fila')) {
+      // la fila de cambios sin commit no es un commit: fuera mientras se filtra y fuera de la cuenta
+      if ((/** @type {HTMLElement} */ (r)).dataset.pendiente) { (/** @type {HTMLElement} */ (r)).hidden = !!q; continue; }
       const ok = !q || (/** @type {HTMLElement} */ (r)).dataset.busqueda.includes(q);
       (/** @type {HTMLElement} */ (r)).hidden = !ok;
       if (ok) { visibles++; }
