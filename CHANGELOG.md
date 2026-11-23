@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- A "Graph" button in the status bar opens the commit graph of the active repository, like Git Graph. Right-click the
+  status bar to hide it.
+- Smoother loading in the commit graph: placeholder rows shaped like real ones with a single shimmer, a spinning refresh
+  button, placeholder rows while the next page loads and a placeholder for the commit details.
+- Fix: with reduced motion enabled, the loading placeholders no longer flicker.
+
 ## 0.2.0
 
 - Commit graph: click a commit to open its details inside the graph (full message, author, parents and changed files;

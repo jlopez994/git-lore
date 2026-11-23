@@ -16,7 +16,7 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
 - **File history and line history.** A *File History* view in the Source Control panel follows the active editor and
   lists every commit that touched the file, renames included. Select some lines and run `Show Line History` (editor
   context menu) to see only the commits that changed them. Click a commit to open its diff.
-- **Commit graph.** `Show Commit Graph` (the merge icon in the Source Control title) draws every branch, local and remote,
+- **Commit graph.** `Show Commit Graph` (the Graph button in the status bar, or the merge icon in the Source Control title) draws every branch, local and remote,
   with branch and tag badges, in a full editor tab. Click a commit to open its details inline: full message, author,
   parents and the changed files, each one opening its diff. A row above HEAD shows your uncommitted changes, and you can
   show all branches, local branches only or the current branch. It loads more commits as you scroll and filters by

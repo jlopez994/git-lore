@@ -213,14 +213,8 @@ body {
   gap: 16px;
   padding: 10px 0 12px;
 }
-.cuerpo.cargando { min-height: 72px; }
-.cuerpo.cargando::before {
-  content: '';
-  grid-column: 1 / -1;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--borde) 0%, transparent 50%, var(--borde) 100%) 0 0 / 200% 100%;
-  animation: brillo 1.2s linear infinite;
-}
+.cuerpo.cargando .hueso { display: block; margin: 4px 0 12px; }
+.cuerpo.cargando > :last-child .hueso { margin-bottom: 14px; }
 .cuerpo > * { animation: entrar .2s var(--salida) both; }
 .ficheros { animation-delay: 60ms; }
 
@@ -281,16 +275,28 @@ body {
 .filtrando .detalle { grid-template-columns: minmax(0, 1fr); padding-left: 12px; }
 .filtrando .fila { grid-template-columns: minmax(0, 1fr) minmax(0, 11em) 9em 5.5em; padding-left: 12px; }
 
-.esqueleto { cursor: default; animation: none; }
-.esqueleto::before {
-  content: '';
-  grid-column: 1 / -1;
+.esqueleto { cursor: default; animation: aparecer .35s var(--salida) both; animation-delay: var(--retardo, 0ms); }
+.esqueleto:hover { background: none; }
+@keyframes aparecer { from { opacity: 0; } }
+
+/* el brillo va anclado a la ventana: una sola onda recorre todos los huesos a la vez */
+.hueso {
   height: 10px;
   border-radius: 5px;
-  background: linear-gradient(90deg, var(--borde) 0%, transparent 50%, var(--borde) 100%) 0 0 / 200% 100%;
-  animation: brillo 1.2s linear infinite;
+  background:
+    linear-gradient(100deg, transparent 40%, color-mix(in srgb, var(--vscode-foreground) 10%, transparent) 50%, transparent 60%)
+      fixed 0 0 / 300% 100%,
+    var(--borde);
+  animation: brillo 1.6s ease-in-out infinite;
 }
-@keyframes brillo { to { background-position: -200% 0; } }
+.hueso.punto { width: 9px; height: 9px; margin: 0 4px; border-radius: 50%; }
+.hueso.autor { width: 65%; }
+.hueso.fecha { width: 50%; }
+.hueso.corto { justify-self: end; width: 4.5em; }
+@keyframes brillo { from { background-position: 100% 0, 0 0; } to { background-position: -50% 0, 0 0; } }
+
+.boton.girando { animation: girar .9s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
 
 .aviso { padding: 24px 12px; color: var(--suave); text-align: center; }
 
@@ -305,4 +311,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
   .grafo path { stroke-dashoffset: 0; }
+  /* una animación infinita a 1 ms parpadearía */
+  .hueso, .boton.girando { animation: none !important; }
 }

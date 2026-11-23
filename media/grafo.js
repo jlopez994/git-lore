@@ -13,6 +13,7 @@
   const alcance = /** @type {HTMLSelectElement} */ (document.getElementById('alcance'));
   const cuenta = document.getElementById('cuenta');
   const fin = document.getElementById('fin');
+  const refrescar = document.getElementById('refrescar');
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
@@ -137,8 +138,27 @@
     vscode.postMessage({ tipo: 'alcance', valor: alcance.value });
   });
 
+  // filas falsas con la forma de las de verdad; los anchos varían para que no parezca una rejilla
+  function esqueletos(n) {
+    return Array.from({ length: n }, (_, i) => {
+      const r = el('div', 'fila esqueleto');
+      r.setAttribute('aria-hidden', 'true');
+      r.style.setProperty('--retardo', `${i * 45}ms`);
+      const texto = el('span', 'hueso');
+      texto.style.width = `${35 + ((i * 37) % 50)}%`;
+      r.append(el('span', 'hueso punto'), texto, el('span', 'hueso autor'), el('span', 'hueso fecha'), el('span', 'hueso corto'));
+      return r;
+    });
+  }
+
+  function cargando(si) {
+    refrescar.classList.toggle('girando', si);
+    lista.setAttribute('aria-busy', String(si));
+  }
+
   function esqueleto() {
-    lista.replaceChildren(...Array.from({ length: 12 }, () => el('div', 'fila esqueleto')));
+    cargando(true);
+    lista.replaceChildren(...esqueletos(12));
   }
 
   function cerrarDetalle() {
@@ -157,7 +177,14 @@
     detalle.dataset.sha = r.dataset.sha;
     detalle.setAttribute('role', 'region');
     detalle.setAttribute('aria-busy', 'true');
-    detalle.append(carrilesDe(porSha.get(r.dataset.sha)), el('div', 'cuerpo cargando'));
+    const espera = el('div', 'cuerpo cargando');
+    const huesos = anchos => {
+      const c = el('div');
+      anchos.forEach(a => { const h = el('span', 'hueso'); h.style.width = a; c.appendChild(h); });
+      return c;
+    };
+    espera.append(huesos(['55%', '90%', '70%', '40%']), huesos(['45%', '60%', '35%']));
+    detalle.append(carrilesDe(porSha.get(r.dataset.sha)), espera);
     r.after(detalle);
     r.setAttribute('aria-expanded', 'true');
     vscode.postMessage({ tipo: 'detalle', sha: r.dataset.sha });
@@ -208,6 +235,8 @@
   window.addEventListener('message', ({ data: m }) => {
     if (m.tipo === 'error') {
       pidiendo = false;
+      cargando(false);
+      fin.replaceChildren();
       lista.replaceChildren(el('p', 'aviso', m.mensaje));
       return;
     }
@@ -219,6 +248,8 @@
     }
     if (m.tipo !== 'filas') { return; }
     pidiendo = false;
+    cargando(false);
+    fin.replaceChildren();
     hayMas = m.hayMas;
     const antes = anchoMax;
     anchoMax = Math.max(anchoMax, ...m.filas.map(f => f.ancho));
@@ -293,7 +324,7 @@
     }
   });
 
-  document.getElementById('refrescar').addEventListener('click', () => {
+  refrescar.addEventListener('click', () => {
     cerrarDetalle();
     esqueleto();
     vscode.postMessage({ tipo: 'refrescar' });
@@ -302,6 +333,7 @@
   new IntersectionObserver(entradas => {
     if (entradas.some(en => en.isIntersecting) && hayMas && !pidiendo && !buscar.value.trim()) {
       pidiendo = true;
+      fin.replaceChildren(...esqueletos(3));
       vscode.postMessage({ tipo: 'mas' });
     }
   }, { rootMargin: '400px' }).observe(fin);
