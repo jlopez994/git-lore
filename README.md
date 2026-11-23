@@ -17,9 +17,11 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   lists every commit that touched the file, renames included. Select some lines and run `Show Line History` (editor
   context menu) to see only the commits that changed them. Click a commit to open its diff.
 - **Commit graph.** `Show Commit Graph` (the merge icon in the Source Control title) draws every branch, local and remote,
-  with branch and tag badges. It loads more commits as you scroll, filters by message, author, ref or SHA, and opens the
-  files of any commit. Works the same on public and private repositories.
-- **Compare.** `Compare Branches or Refs…` lists the files that differ between two branches, tags or commits (you can
+  with branch and tag badges, in a full editor tab. Click a commit to open its details inline: full message, author,
+  parents and the changed files, each one opening its diff. A row above HEAD shows your uncommitted changes, and you can
+  show all branches, local branches only or the current branch. It loads more commits as you scroll and filters by
+  message, author, ref or SHA. Works the same on public and private repositories.
+- **Compare.** `Compare Branches or Refs…` (the compare icon in the Source Control title) lists the files that differ between two branches, tags or commits (you can
   type any SHA), or between a ref and your working tree. Click a file for its diff; swap the sides from the view title.
 
 Everything is localized in English and Spanish.

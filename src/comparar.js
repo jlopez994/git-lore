@@ -82,8 +82,9 @@ function registrar(context, protegido) {
 
   context.subscriptions.push(
     vista,
-    vscode.commands.registerCommand('gitLore.compareRefs', () => protegido(async () => {
-      const repo = await elegirRepo();
+    vscode.commands.registerCommand('gitLore.compareRefs', arg => protegido(async () => {
+      // desde la barra de Source Control llega el SourceControl de ese repo
+      const repo = (arg && arg.rootUri && (await git.obtenerApi()).getRepository(arg.rootUri)) || await elegirRepo();
       if (!repo) { return vscode.window.showWarningMessage(t('No git repository is open')); }
       const a = await elegirRef(repo, t('Compare: base'), { conArbol: false });
       if (!a) { return; }

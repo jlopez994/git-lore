@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -210,7 +210,7 @@
         {
           "command": "gitLore.compareRefs",
           "when": "scmProvider == git",
-          "group": "gitLore@1"
+          "group": "navigation@-2"
         }
       ],
       "view/title": [

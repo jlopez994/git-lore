@@ -122,6 +122,18 @@ test('grafo: continúa desde los carriles de la página anterior', () => {
   assert.deepStrictEqual([...p1.filas, ...p2.filas].map(f => f.col), entero);
 });
 
+test('grafo: la fila de cambios sin commit cae en HEAD aunque HEAD no sea la primera', () => {
+  // x es la punta de otra rama, más reciente que HEAD (h)
+  const { filas } = trazarGrafo([
+    { sha: 'pendientes', padres: ['h'] },
+    { sha: 'x', padres: ['b'] },
+    { sha: 'h', padres: ['b'] },
+    { sha: 'b', padres: [] },
+  ]);
+  assert.deepStrictEqual(filas.map(f => f.col), [0, 1, 0, 0]);
+  assert.ok(filas[1].segmentos.some(s => s.x1 === 0 && s.x2 === 0 && s.y1 === 0 && s.y2 === 1), 'el carril 0 baja recto hasta HEAD');
+});
+
 test('tiempo', () => {
   const ahora = Date.UTC(2026, 10, 23);
   assert.strictEqual(fechaRelativa(ahora - 3 * 86400000, ahora, 'en'), '3 days ago');
