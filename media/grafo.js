@@ -116,7 +116,9 @@
     sha.dataset.accion = 'copiar';
     const fecha = el('span', 'fecha', f.fecha);
     fecha.title = f.fechaCompleta;
-    r.append(grafico(f), texto, el('span', 'autor', f.autor), fecha, sha);
+    const autor = el('span', 'autor', f.autor);
+    autor.title = f.correo ? `${f.autor} <${f.correo}>` : f.autor;
+    r.append(grafico(f), texto, autor, fecha, sha);
     contexto(r, { webviewSection: 'commit', sha: f.sha });
     r.setAttribute('aria-expanded', 'false');
     return r;

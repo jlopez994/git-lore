@@ -126,6 +126,7 @@ function abrir(context, repo) {
           ...f,
           resumen: c.resumen,
           autor: c.autor,
+          correo: c.correo,
           fecha: relativa(c.fecha),
           fechaCompleta: new Date(c.fecha).toLocaleString(vscode.env.language),
           refs: c.refs.map(clasificarRef).filter(Boolean),

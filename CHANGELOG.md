@@ -8,6 +8,7 @@
   Checking out a remote branch creates the local branch that tracks it, or switches to it if it exists.
 - Commit graph: right-click a file in the commit details to open its changes, open it at that revision, compare it with
   the working file, open the working file, copy its path or relative path, or restore it to that revision.
+- Commit graph: hover the author to see their full name and email.
 - Commit graph: a Fetch button in the toolbar fetches from all remotes and redraws the graph.
 - Commit graph: narrower lanes, and the graph takes at most a fifth of the panel (wider repos fade out at the edge).
   Drag its edge to resize it, or double-click it to go back to automatic.
