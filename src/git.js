@@ -137,6 +137,18 @@ async function resolverRef(repo, ref) {
   }
 }
 
+// todas las refs con su commit: si cambia, algo se movió (fetch, push, ramas o tags creados fuera, un stash).
+// repo.state.refs no sirve: las versiones recientes de VS Code lo dejan vacío y cargan las refs bajo demanda
+async function firmaDeRefs(repo) {
+  return ejecutar(repo.rootUri.fsPath, ['for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads', 'refs/remotes', 'refs/tags', 'refs/stash']);
+}
+
+// el .git compartido por todos los worktrees: ahí viven las refs
+async function dirComun(repo) {
+  const salida = (await ejecutar(repo.rootUri.fsPath, ['rev-parse', '--git-common-dir'])).trim();
+  return path.resolve(repo.rootUri.fsPath, salida);
+}
+
 async function stashes(repo) {
   return parsearStash(await ejecutar(repo.rootUri.fsPath, ['stash', 'list', `--format=${FORMATO_STASH}`]));
 }
@@ -220,5 +232,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, ErrorGit,
 };

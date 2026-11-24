@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- The commit graph redraws by itself when any branch, remote branch, tag or stash moves: VS Code's background
+  auto-fetch (`git.autofetch`), a fetch or push from the terminal, or branches, tags and stashes made outside it.
+  Before, it only noticed changes to the current branch and to uncommitted files.
+
 ## 0.6.0
 
 - Step through a file's revisions from the editor title: ← opens the diff of the previous commit to the file, → the

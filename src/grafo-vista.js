@@ -117,10 +117,12 @@ function abrir(context, repo) {
     try {
       // stash y worktrees se leen al recargar; las páginas siguientes tiran de lo leído
       if (reiniciar) {
-        const [st, wts] = await Promise.all([git.stashes(repo).catch(() => []), git.worktrees(repo).catch(() => [])]);
+        const [st, wts, refs] = await Promise.all([git.stashes(repo).catch(() => []), git.worktrees(repo).catch(() => []),
+          git.firmaDeRefs(repo).catch(() => null)]);
         if (mia !== generacion || cerrado) { return; }
         stashSinColocar = st;
         otrosWorktrees = wts;
+        firmaRefs = refs; // lo que se pinta ahora: un cambio posterior lo detecta comprobarRefs
       }
       const extra = otrosWorktrees.filter(w => !w.rama).map(w => w.head); // un HEAD separado no sale con --branches
       const commits = await git.grafo(repo, { saltar: desde, limite, alcance, extra });
@@ -170,6 +172,19 @@ function abrir(context, repo) {
   };
   let firma = firmaActual();
   let temporizador;
+  let firmaRefs = null;
+  let esperaRefs;
+  // con retardo: onDidChange llega a ráfagas (cada guardado refresca el estado) y esto lanza un git
+  const comprobarRefs = () => {
+    clearTimeout(esperaRefs);
+    esperaRefs = setTimeout(async () => {
+      if (recargando || firmaRefs === null || cerrado) { return; } // la recarga en curso ya leerá las refs nuevas
+      const ahora = await git.firmaDeRefs(repo).catch(() => null);
+      if (ahora === null || ahora === firmaRefs || recargando) { return; }
+      firmaRefs = ahora;
+      cargar(true, true);
+    }, 400);
+  };
   // la acción ya recarga: que el cambio de HEAD que provoca no dispare una segunda recarga
   const recargar = () => {
     firma = firmaActual();
@@ -180,7 +195,10 @@ function abrir(context, repo) {
   const suscripciones = [
     repo.state.onDidChange(() => {
       const ahora = firmaActual();
-      if (ahora === firma) { return enviar({ tipo: 'pendientes', texto: textoPendientes(pendientes(repo)) }); }
+      if (ahora === firma) {
+        comprobarRefs(); // un fetch en segundo plano mueve remotas sin tocar HEAD
+        return enviar({ tipo: 'pendientes', texto: textoPendientes(pendientes(repo)) });
+      }
       firma = ahora;
       clearTimeout(temporizador);
       temporizador = setTimeout(() => cargar(true), 500);
@@ -212,12 +230,24 @@ function abrir(context, repo) {
     }),
   ];
 
+  // crear una rama o un tag desde la terminal no dispara onDidChange: se vigilan los ficheros de refs
+  git.dirComun(repo).then(dir => {
+    if (cerrado) { return; }
+    const vigia = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(vscode.Uri.file(dir), '{refs/**,packed-refs,FETCH_HEAD,logs/refs/stash}'));
+    vigia.onDidCreate(comprobarRefs);
+    vigia.onDidChange(comprobarRefs);
+    vigia.onDidDelete(comprobarRefs);
+    suscripciones.push(vigia);
+  }, () => { }); // sin vigía el grafo sigue recargando con los cambios de HEAD y el botón de refrescar
+
   panel.onDidDispose(() => {
     cerrado = true;
     paneles.delete(raiz);
     vistas.delete(id);
     suscripciones.forEach(d => d.dispose());
     clearTimeout(temporizador);
+    clearTimeout(esperaRefs);
   });
 
   panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'), id);
