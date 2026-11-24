@@ -179,3 +179,30 @@ test('refs: nombres de rama o tag que git no aceptaría', () => {
     assert.ok(!nombreValido(mal), mal);
   }
 });
+
+test('historia: numstat por commit, con binarios', () => {
+  const { parsearNumstat } = require('../src/nucleo/parseo');
+  const l = parsearNumstat('\x1eaaa\n\n3\t1\ta.txt\n\x1ebbb\n\n-\t-\tlogo.png\n\x1eccc\n');
+  assert.deepStrictEqual(l.get('aaa'), { mas: 3, menos: 1, binario: false });
+  assert.deepStrictEqual(l.get('bbb'), { mas: 0, menos: 0, binario: true });
+  assert.deepStrictEqual(l.get('ccc'), { mas: 0, menos: 0, binario: false });
+  // real: el commit «segundo» cambió una línea de a.txt
+  const real = parsearNumstat(git('log', '--follow', '--numstat', '--format=%x1e%H', '--', 'b con espacio.txt'));
+  assert.strictEqual(real.size, 3);
+  assert.ok([...real.values()].some(v => v.mas === 1 && v.menos === 1));
+});
+
+test('historia: autores por correo, ordenados y con «otros» a partir del máximo', () => {
+  const { agruparAutores } = require('../src/nucleo/historia');
+  const c = (autor, correo) => ({ autor, correo });
+  const commits = [c('Ana', 'a@x'), c('Ana López', 'A@x'), c('Bea', 'b@x'), c('Ana', 'a@x'), c('Cris', 'c@x'), c('Dani', 'd@x')];
+  const { autores, filaDe } = agruparAutores(commits, 3);
+  assert.deepStrictEqual(autores.map(a => [a.nombre, a.commits, a.color]), [['Ana', 3, 0], ['Bea', 1, 1], [null, 2, null]]);
+  assert.strictEqual(autores[2].otros, 2);
+  assert.deepStrictEqual(commits.map(filaDe), [0, 0, 1, 0, 2, 2]);
+  assert.strictEqual(agruparAutores(commits, 8).autores.length, 4);
+  // con justo max autores no hay color para el último: cae en «otros»
+  const cuatro = agruparAutores(commits, 4).autores;
+  assert.deepStrictEqual(cuatro.map(a => a.color), [0, 1, 2, null]);
+  assert.ok(cuatro.every(a => a.color === null || a.color < 3));
+});

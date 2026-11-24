@@ -101,4 +101,23 @@ function parsearDiff(texto) {
   return texto.split('\n').map(parsearNameStatus).filter(Boolean);
 }
 
-module.exports = { desentrecomillar, parsearBlame, parsearLog, parsearDiff, FORMATO_LOG };
+// git log --numstat --format=%x1e%H → sha → líneas añadidas y borradas (un binario no tiene líneas)
+const FORMATO_SHA = '%x1e%H';
+const NUMSTAT = /^(\d+|-)\t(\d+|-)\t/;
+function parsearNumstat(texto) {
+  const lineas = new Map();
+  for (const bloque of texto.split(SEP_REG)) {
+    const [sha, ...resto] = bloque.trim().split('\n');
+    if (!sha) { continue; }
+    let mas = 0, menos = 0, binario = false;
+    for (const l of resto) {
+      const m = NUMSTAT.exec(l);
+      if (!m) { continue; }
+      if (m[1] === '-') { binario = true; } else { mas += Number(m[1]); menos += Number(m[2]); }
+    }
+    lineas.set(sha.trim(), { mas, menos, binario });
+  }
+  return lineas;
+}
+
+module.exports = { desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, FORMATO_LOG, FORMATO_SHA };

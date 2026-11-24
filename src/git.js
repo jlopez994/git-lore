@@ -3,7 +3,7 @@
 const cp = require('child_process');
 const path = require('path');
 const vscode = require('vscode');
-const { parsearBlame, parsearLog, parsearDiff, FORMATO_LOG } = require('./nucleo/parseo');
+const { parsearBlame, parsearLog, parsearDiff, parsearNumstat, FORMATO_LOG, FORMATO_SHA } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
 const t = vscode.l10n.t;
@@ -80,6 +80,12 @@ async function historial(repo, uri, { desde, hasta, limite = 500 } = {}, token) 
     ? ['log', `-L${desde},${hasta}:${ruta}`, '-s', `-n${limite}`, `--format=${FORMATO_LOG}`]
     : ['log', '--follow', '-M', '--name-status', `-n${limite}`, `--format=${FORMATO_LOG}`, '--', ruta];
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args, { token }));
+}
+
+// las mismas opciones que historial(): mismos commits, para cruzarlos por sha
+async function lineasDeFichero(repo, uri, limite) {
+  const args = ['log', '--follow', '-M', '--numstat', `-n${limite}`, `--format=${FORMATO_SHA}`, '--', rutaRelativa(repo, uri)];
+  return parsearNumstat(await ejecutar(repo.rootUri.fsPath, args));
 }
 
 async function ficherosDeCommit(repo, sha) {
@@ -183,6 +189,6 @@ function uriEnRevision(repo, ruta, ref) {
 }
 
 module.exports = {
-  ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
+  ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
   uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, ErrorGit,
 };

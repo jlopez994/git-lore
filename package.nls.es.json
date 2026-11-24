@@ -35,5 +35,6 @@
   "command.graph.openFile": "Abrir el fichero",
   "command.graph.copyPath": "Copiar ruta",
   "command.graph.copyRelativePath": "Copiar ruta relativa",
-  "command.graph.restoreFile": "Restaurar el fichero a esta revisión…"
+  "command.graph.restoreFile": "Restaurar el fichero a esta revisión…",
+  "command.visualFileHistory": "Ver historial visual del fichero"
 }

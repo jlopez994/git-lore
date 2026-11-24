@@ -35,5 +35,6 @@
   "command.graph.openFile": "Open File",
   "command.graph.copyPath": "Copy Path",
   "command.graph.copyRelativePath": "Copy Relative Path",
-  "command.graph.restoreFile": "Restore File to This Revision…"
+  "command.graph.restoreFile": "Restore File to This Revision…",
+  "command.visualFileHistory": "Show Visual File History"
 }

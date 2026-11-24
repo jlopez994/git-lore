@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+- Visual File History: `Show Visual File History` (editor and tab context menus, Explorer, or the icon in the File
+  History view) draws every commit to a file as a dot on a timeline, one row per author, sized by the lines it changed,
+  with the added and deleted lines below. Hover a dot for the commit, click it for its diff, or move between commits
+  with the arrow keys. Hover an author to highlight their commits.
+
 ## 0.4.1
 
 - Branch and tag badges show long names in full (up to 24em) and shrink only when the row is crowded; hover one for its

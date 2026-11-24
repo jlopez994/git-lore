@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -216,6 +216,12 @@
         "command": "gitLore.graph.restoreFile",
         "title": "%command.graph.restoreFile%",
         "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.visualFileHistory",
+        "title": "%command.visualFileHistory%",
+        "category": "Git Lore",
+        "icon": "$(graph-scatter)"
       }
     ],
     "menus": {
@@ -319,6 +325,10 @@
         {
           "command": "gitLore.graph.restoreFile",
           "when": "false"
+        },
+        {
+          "command": "gitLore.visualFileHistory",
+          "when": "resourceScheme == file"
         }
       ],
       "editor/title": [
@@ -333,6 +343,11 @@
           "command": "gitLore.fileHistory",
           "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
           "group": "gitLore@1"
+        },
+        {
+          "command": "gitLore.visualFileHistory",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "gitLore@2"
         }
       ],
       "editor/context": [
@@ -345,6 +360,11 @@
           "command": "gitLore.toggleFileBlame",
           "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
           "group": "gitLore@2"
+        },
+        {
+          "command": "gitLore.visualFileHistory",
+          "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "gitLore@3"
         }
       ],
       "explorer/context": [
@@ -352,6 +372,11 @@
           "command": "gitLore.fileHistory",
           "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
           "group": "gitLore@1"
+        },
+        {
+          "command": "gitLore.visualFileHistory",
+          "when": "!explorerResourceIsFolder && gitOpenRepositoryCount != 0",
+          "group": "gitLore@2"
         }
       ],
       "scm/title": [
@@ -367,6 +392,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "gitLore.visualFileHistory",
+          "when": "view == gitLore.history",
+          "group": "navigation@0"
+        },
         {
           "command": "gitLore.refreshHistory",
           "when": "view == gitLore.history",
