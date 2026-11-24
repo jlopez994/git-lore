@@ -139,8 +139,14 @@ async function resolverRef(repo, ref) {
 
 // todas las refs con su commit: si cambia, algo se movió (fetch, push, ramas o tags creados fuera, un stash).
 // repo.state.refs no sirve: las versiones recientes de VS Code lo dejan vacío y cargan las refs bajo demanda
+// refs/stash es solo el de arriba: descartar uno intermedio solo se ve en la lista completa
 async function firmaDeRefs(repo) {
-  return ejecutar(repo.rootUri.fsPath, ['for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads', 'refs/remotes', 'refs/tags', 'refs/stash']);
+  const raiz = repo.rootUri.fsPath;
+  const [refs, stash] = await Promise.all([
+    ejecutar(raiz, ['for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads', 'refs/remotes', 'refs/tags']),
+    ejecutar(raiz, ['stash', 'list', '--format=%H']),
+  ]);
+  return `${refs}\n${stash}`;
 }
 
 // el .git compartido por todos los worktrees: ahí viven las refs

@@ -178,9 +178,12 @@ function abrir(context, repo) {
   const comprobarRefs = () => {
     clearTimeout(esperaRefs);
     esperaRefs = setTimeout(async () => {
-      if (recargando || firmaRefs === null || cerrado) { return; } // la recarga en curso ya leerá las refs nuevas
+      if (firmaRefs === null || cerrado) { return; }
+      // la recarga en curso leyó las refs al empezar: lo que se mueva después se mira cuando acabe
+      if (recargando) { return comprobarRefs(); }
       const ahora = await git.firmaDeRefs(repo).catch(() => null);
-      if (ahora === null || ahora === firmaRefs || recargando) { return; }
+      if (recargando) { return comprobarRefs(); }
+      if (ahora === null || ahora === firmaRefs) { return; }
       firmaRefs = ahora;
       cargar(true, true);
     }, 400);
