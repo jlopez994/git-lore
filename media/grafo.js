@@ -142,6 +142,7 @@
   buscar.addEventListener('input', () => {
     document.body.classList.toggle('filtrando', !!buscar.value.trim());
     filtrar();
+    pedirMas();
   });
 
   alcance.addEventListener('change', () => {
@@ -296,6 +297,7 @@
       abrirDetalle(abierta);
     }
     filtrar();
+    requestAnimationFrame(pedirMas); // una página que no llena la pantalla pide la siguiente
   });
 
   function avisarCopiado(boton) {
@@ -395,13 +397,17 @@
     vscode.postMessage({ tipo: 'refrescar' });
   });
 
-  new IntersectionObserver(entradas => {
-    if (entradas.some(en => en.isIntersecting) && hayMas && !pidiendo && !buscar.value.trim()) {
-      pidiendo = true;
-      fin.replaceChildren(...esqueletos(3));
-      vscode.postMessage({ tipo: 'mas' });
-    }
-  }, { rootMargin: '400px' }).observe(fin);
+  // se comprueba en cada scroll y tras cada carga, no solo cuando el final entra en pantalla: si ya estaba a la vista
+  // al acabar una recarga o al quitar el filtro, un IntersectionObserver no volvería a avisar
+  function pedirMas() {
+    if (!hayMas || pidiendo || buscar.value.trim() || fin.getBoundingClientRect().top > innerHeight + 400) { return; }
+    pidiendo = true;
+    fin.replaceChildren(...esqueletos(3));
+    vscode.postMessage({ tipo: 'mas' });
+  }
+  window.addEventListener('scroll', pedirMas, { passive: true });
+  window.addEventListener('resize', pedirMas);
+  document.addEventListener('visibilitychange', pedirMas);
 
   esqueleto();
   vscode.postMessage({ tipo: 'listo' });

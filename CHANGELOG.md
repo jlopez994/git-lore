@@ -16,6 +16,9 @@
 - Fix: going back to the commit graph after opening a diff keeps the scroll position, filter and open commit instead of
   reloading.
 - Fix: the open commit stays open when the graph reloads because the repository changed.
+- Fix: scrolling to the bottom of the commit graph always loads the next page, also after a reload, after clearing the
+  filter or when coming back to the tab.
+- The refresh button spins its icon only, not the whole button.
 - Fix: the graph width shrinks again after switching to fewer branches or reloading.
 
 ## 0.3.0

@@ -44,7 +44,7 @@ function html(webview, raizExt, nonce, id) {
   </select>
   <span id="cuenta" class="cuenta" aria-live="polite"></span>
   <button id="fetch" class="boton" title="${t('Fetch from all remotes')}" aria-label="${t('Fetch from all remotes')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v9m-4-4 4 4 4-4M2 14h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-  <button id="refrescar" class="boton" title="${t('Refresh')}" aria-label="${t('Refresh')}">↻</button>
+  <button id="refrescar" class="boton" title="${t('Refresh')}" aria-label="${t('Refresh')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </header>
 <main id="lista" class="lista" role="list"></main>
 <div id="fin" class="fin" aria-hidden="true"></div>
@@ -95,6 +95,7 @@ function abrir(context, repo) {
   let saltar = 0;
   let carriles = [];
   let cargandoMas = false;
+  let recargando = false;
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
   const id = crypto.randomUUID();
@@ -104,8 +105,9 @@ function abrir(context, repo) {
 
   // mantener: tras una acción se recargan los commits que ya había (hasta MAX_RECARGA) para no perder el scroll
   async function cargar(reiniciar, mantener) {
-    if (!reiniciar && cargandoMas) { return; }
-    if (reiniciar) { generacion++; }
+    // una página pedida durante una recarga saldría con el desplazamiento viejo: la recarga ya trae lo que toca
+    if (!reiniciar && (cargandoMas || recargando)) { return; }
+    if (reiniciar) { generacion++; recargando = true; }
     const mia = generacion;
     const desde = reiniciar ? 0 : saltar;
     const limite = mantener ? Math.min(MAX_RECARGA, Math.max(PAGINA, saltar)) : PAGINA;
@@ -137,7 +139,7 @@ function abrir(context, repo) {
     } catch (e) {
       if (mia === generacion) { enviar({ tipo: 'error', mensaje: e.message }); }
     } finally {
-      if (mia === generacion) { cargandoMas = false; }
+      if (mia === generacion) { cargandoMas = false; recargando = false; }
     }
   }
 
