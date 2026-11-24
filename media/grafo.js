@@ -88,6 +88,7 @@
 
   function insignia(ref, sha) {
     const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
+    e.title = ref.nombre; // el chip se corta con «…» si el nombre es muy largo
     contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
     return e;
   }
@@ -101,7 +102,10 @@
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
     f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha)));
-    texto.appendChild(el('span', 'resumen', f.resumen));
+    const resumen = el('span', 'resumen', f.resumen);
+    // el mensaje se corta con «…»: entero al pasar el ratón, con lo justo para ubicar el commit
+    resumen.title = f.pendiente ? f.resumen : `${f.resumen}\n${f.sha.slice(0, 7)} · ${f.autor} · ${f.fechaCompleta}`;
+    texto.appendChild(resumen);
     r.dataset.busqueda = `${f.resumen} ${f.autor} ${f.refs.map(ref => ref.nombre).join(' ')} ${f.sha}`.toLowerCase();
     if (f.pendiente) {
       contexto(r, { webviewSection: 'pendiente' });
