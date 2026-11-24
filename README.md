@@ -1,6 +1,7 @@
 # Git Lore
 
-Free and open-source Git superpowers for VS Code: blame, file and line history, a commit graph and branch comparison.
+Free and open-source Git superpowers for VS Code: blame, file and line history, a visual file history, revision
+navigation, a commit graph you can work from (branches, checkout, merge, cherry-pick, stash…) and branch comparison.
 No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
 
 ![Git Lore](images/icon.png)
@@ -18,24 +19,33 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   context menu) to see only the commits that changed them. Click a commit to open its diff.
 - **Visual file history.** `Show Visual File History` (editor context menu, Explorer, or the icon in the File History
   view) puts every commit to a file on a timeline: one row per author, dots sized by the lines changed, and added and
-  deleted lines underneath. Hover a dot for the commit, click it for its diff.
+  deleted lines underneath. Hover a dot for the commit, click it for its diff, or move between commits with the arrow
+  keys. Hover an author to highlight their commits.
 - **Revision navigation.** The ← and → buttons in the editor title step through the commits that changed the file,
   each as a diff; → from the newest commit returns to the working file.
-- **Commit graph.** `Show Commit Graph` (the Graph button in the status bar, or the merge icon in the Source Control title) draws every branch, local and remote,
-  with branch and tag badges, in a full editor tab. Click a commit to open its details inline: full message, author,
-  parents and the changed files, each one opening its diff. A row above HEAD shows your uncommitted changes, and you can
-  show all branches, local branches only or the current branch. It loads more commits as you scroll and filters by
-  message, author, ref or SHA. Works the same on public and private repositories.
-  Right-click a commit (or press Shift+F10 on it) to create a branch or tag there, check it out, cherry-pick it, revert it
-  or reset the current branch to it. Right-click a branch or tag badge to check it out, merge it into the current
-  branch or delete it; checking out a remote branch creates the local branch that tracks it.
-  Right-click a file in the commit details to open its changes, open it at that revision, compare it with the working
-  file, open the working file, copy its path or restore it to that revision. The download button in the
-  graph toolbar fetches from all remotes. Deleting and `reset --hard` ask first.
-  Stashes appear as rows on the commit they were made on (apply, pop or drop them from their menu), and branches
-  checked out in other worktrees are marked, with an option to open that worktree in a new window.
-- **Compare.** `Compare Branches or Refs…` (the compare icon in the Source Control title) lists the files that differ between two branches, tags or commits (you can
-  type any SHA), or between a ref and your working tree. Click a file for its diff; swap the sides from the view title.
+- **Commit graph.** `Show Commit Graph` (the Graph button in the status bar, or the merge icon in the Source Control
+  title) draws every branch, local and remote, in a full editor tab, in the spirit of Git Graph.
+  - *Reading it:* colored lanes, with branch and tag badges in the color of their lane (local branches filled, remote
+    ones tinted, tags neutral). Hover a message, author or badge for the full text. A row above HEAD shows your
+    uncommitted changes. Choose all branches, local branches or the current branch, filter by message, author, ref or
+    SHA, and scroll to load more. Drag the graph's edge to make it wider (double-click to reset).
+  - *Commit details:* click a commit (or press Enter; arrows move between rows) to open its message, author, parents and
+    changed files inline. Each file opens its diff; right-click it to open it at that revision, compare it with the
+    working file, open the working file, copy its path or restore it to that revision.
+  - *Working from it:* right-click a commit (or Shift+F10) to create a branch or tag on it, check it out, cherry-pick
+    it, revert it or reset the current branch to it. Right-click a badge to check out, merge into the current branch or
+    delete it; checking out a remote branch creates the local branch that tracks it. The toolbar button fetches from
+    all remotes. Deleting and `reset --hard` ask first.
+  - *Stashes and worktrees:* stashes are rows on the commit they were made on (apply, pop or drop them from their
+    menu). Branches checked out in another worktree carry a folder icon, a detached worktree gets its own badge, and
+    you can open any of them in a new window.
+  - *Always current:* it redraws by itself when HEAD, your uncommitted files or any branch, tag or stash changes,
+    including fetches, pushes and branches made from the terminal. Turn on VS Code's `git.autofetch` to keep remote
+    branches fresh in the background.
+
+  Works the same on public and private repositories.
+- **Compare.** `Compare Branches or Refs…` (the compare icon in the Source Control title) lists the files that differ
+  between two branches, tags or commits (you can type any SHA), or between a ref and your working tree. Click a file for its diff; swap the sides from the view title.
 
 Everything is localized in English and Spanish.
 
@@ -47,6 +57,8 @@ Everything is localized in English and Spanish.
 
 The colors are themeable: `gitLore.currentLineForeground`, `gitLore.fileBlameForeground`, `gitLore.fileBlameBackground`.
 
+For a commit graph that keeps remote branches fresh, enable VS Code's `git.autofetch` (and `git.autofetchPeriod`).
+
 If you also enable VS Code's own blame (`git.blame.editorDecoration.enabled`), you will see the blame twice; keep one.
 
 ## Requirements
@@ -56,8 +68,10 @@ It works in local folders and remote workspaces (SSH, WSL, containers).
 
 ## How it works
 
-Git Lore only runs read-only git commands (`blame`, `log`, `show`, `diff`, `for-each-ref`) in your repository. It never
-changes your repository, sends nothing anywhere and has no telemetry.
+Git Lore runs `git` in your repository with the binary of the built-in Git extension. On its own it only reads (`blame`,
+`log`, `show`, `diff`, `for-each-ref`, `stash list`, `worktree list`). It only changes your repository when you pick an
+action in the commit graph (checkout, branch, tag, merge, cherry-pick, revert, reset, stash, restore a file, fetch),
+and the destructive ones ask first. It sends nothing anywhere and has no telemetry.
 
 ## Contributing
 

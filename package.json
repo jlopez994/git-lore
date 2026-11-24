@@ -30,7 +30,11 @@
     "history",
     "file history",
     "line history",
+    "visual history",
     "commit graph",
+    "git graph",
+    "stash",
+    "worktree",
     "compare",
     "open source"
   ],
