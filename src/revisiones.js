@@ -34,8 +34,11 @@ function destino(uri) {
   }
 }
 
+// vale el guardado si ese commit está y, en él, el fichero tenía esta ruta: un commit toca varios ficheros
 async function historialDe(repo, fichero, sha) {
-  if (sha && ultimo && ultimo.raiz === repo.rootUri.fsPath && ultimo.commits.some(c => c.sha === sha)) { return ultimo; }
+  const ruta = git.rutaRelativa(repo, fichero);
+  const c = sha && ultimo && ultimo.raiz === repo.rootUri.fsPath && ultimo.cambios.get(sha);
+  if (c && (c.ruta === ruta || c.rutaAnterior === ruta)) { return ultimo; }
   const commits = await git.historial(repo, fichero, { limite: LIMITE });
   ultimo = { raiz: repo.rootUri.fsPath, fichero, commits, cambios: cambiosDe(commits, git.rutaRelativa(repo, fichero)) };
   return ultimo;
@@ -49,9 +52,18 @@ async function navegar(arg, paso) {
   if (!repo) { return vscode.window.showWarningMessage(t('Open a file in a git repository first')); }
   const h = await historialDe(repo, d.fichero, d.sha);
   const i = d.sha ? h.commits.findIndex(c => c.sha === d.sha) : -1;
+  // un commit fuera del historial (más allá del límite, o que no tocó el fichero) no es el árbol de trabajo
+  if (d.sha && i < 0) { return vscode.window.setStatusBarMessage(t('This revision is not in the history of {0}', path.basename(d.fichero.fsPath)), 3000); }
   const j = i + paso;
   if (j < -1) { return; }
-  if (j === -1) { return vscode.commands.executeCommand('vscode.open', h.fichero); }
+  if (j === -1) {
+    try {
+      await vscode.workspace.fs.stat(h.fichero);
+    } catch {
+      return vscode.window.setStatusBarMessage(t('{0} no longer exists in the working tree', path.basename(h.fichero.fsPath)), 3000);
+    }
+    return vscode.commands.executeCommand('vscode.open', h.fichero);
+  }
   if (j >= h.commits.length) {
     return vscode.window.setStatusBarMessage(t('{0} has no older revisions', path.basename(h.fichero.fsPath)), 3000);
   }

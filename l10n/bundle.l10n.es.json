@@ -76,6 +76,7 @@
   "The built-in Git extension is not available": "La extensión Git integrada no está disponible",
   "The Commit Graph is no longer open": "El grafo de commits ya no está abierto",
   "This repository has no web remote": "Este repositorio no tiene un remoto web",
+  "This revision is not in the history of {0}": "Esta revisión no está en el historial de {0}",
   "Uncommitted": "Sin commit",
   "Uncommitted changes": "Cambios sin commit",
   "Uncommitted changes ({0})": "Cambios sin commit ({0})",
