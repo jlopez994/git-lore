@@ -3,6 +3,8 @@
   "{0} commits": "{0} commits",
   "{0} has no older revisions": "{0} no tiene revisiones más antiguas",
   "{0} no longer exists in the working tree": "{0} ya no existe en el árbol de trabajo",
+  "1 author": "1 autor",
+  "1 commit": "1 commit",
   "All branches": "Todas las ramas",
   "binary": "binario",
   "Branch {0} is not fully merged. Delete it anyway?": "La rama {0} no está fusionada del todo. ¿Borrarla igualmente?",

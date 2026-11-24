@@ -135,7 +135,7 @@ body {
 }
 .globo strong { overflow-wrap: anywhere; }
 .globo .quien, .globo .cuando { color: var(--suave); }
-.globo code { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); }
+.globo code { margin-left: 6px; color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); }
 @keyframes aparecer { from { opacity: 0; } }
 
 .aviso { color: var(--suave); }

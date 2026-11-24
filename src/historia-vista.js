@@ -14,7 +14,7 @@ const paneles = new Map(); // fsPath → { panel, cargar }
 function html(webview, raizExt, nonce) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
-    commits: t('{0} commits'), autores: t('{0} authors'), otros: t('Others ({0})'), sinCommits: t('No commits'),
+    commits: t('{0} commits'), unCommit: t('1 commit'), autores: t('{0} authors'), unAutor: t('1 author'), otros: t('Others ({0})'), sinCommits: t('No commits'),
     lineas: t('Lines changed'), desde: t('since {0}'), binario: t('binary'), limite: t('Showing the last {0} commits'),
   };
   return `<!doctype html>

@@ -26,7 +26,8 @@ class Contribuidores {
       const a = e.persona;
       const item = new vscode.TreeItem(a.nombre, vscode.TreeItemCollapsibleState.Collapsed);
       // dos personas con el mismo nombre (o una con dos correos) solo se distinguen por el correo
-      item.description = e.repetido ? `${t('{0} commits', a.commits)} · ${a.correo}` : t('{0} commits', a.commits);
+      const n = a.commits === 1 ? t('1 commit') : t('{0} commits', a.commits);
+      item.description = e.repetido ? `${n} · ${a.correo}` : n;
       item.tooltip = `${a.nombre} <${a.correo}>`;
       item.iconPath = new vscode.ThemeIcon('person');
       item.contextValue = 'autor';
