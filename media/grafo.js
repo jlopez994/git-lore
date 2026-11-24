@@ -15,6 +15,12 @@
   const fin = document.getElementById('fin');
   const refrescar = document.getElementById('refrescar');
   const traer = document.getElementById('fetch');
+  const botonResaltar = document.getElementById('resaltar');
+  const aqui = document.getElementById('aqui');
+  /** @type {{sha: string, nombre: string} | null} */
+  let actual = null;
+  let resaltar = (vscode.getState() || {}).resaltar !== false;
+  let buscandoHead = 0; // páginas que quedan por pedir buscando la fila de HEAD
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
@@ -172,6 +178,8 @@
     document.body.classList.toggle('filtrando', !!buscar.value.trim());
     filtrar();
     pedirMas();
+    observada = null; // vuelve a medir: al filtrar la píldora se esconde y al quitar el filtro vuelve si toca
+    vigilarHead();
   });
 
   alcance.addEventListener('change', () => {
@@ -338,9 +346,83 @@
       abierta.classList.add('seleccionada');
       abrirDetalle(abierta);
     }
+    if (m.reiniciar) { actual = m.actual; }
+    marcarAjenas();
     filtrar();
+    if (buscandoHead) { seguirBuscandoHead(); }
+    vigilarHead();
     requestAnimationFrame(pedirMas); // una página que no llena la pantalla pide la siguiente
   });
+
+  // Con muchas ramas cuesta ver dónde estás: lo que no es historia de HEAD se atenúa (como el «mute» de Git Graph)
+  function marcarAjenas() {
+    const dentro = new Set();
+    const pila = actual ? [actual.sha] : [];
+    while (pila.length) {
+      const s = pila.pop();
+      if (dentro.has(s)) { continue; }
+      dentro.add(s);
+      const f = porSha.get(s);
+      if (f && f.padres) { pila.push(...f.padres); }
+    }
+    for (const r of lista.querySelectorAll('.fila:not(.esqueleto)')) {
+      const e = /** @type {HTMLElement} */ (r);
+      e.classList.toggle('ajena', !!actual && !e.dataset.pendiente && !dentro.has(e.dataset.sha));
+    }
+  }
+
+  function aplicarResaltado() {
+    document.body.classList.toggle('resaltar', resaltar);
+    botonResaltar.setAttribute('aria-pressed', String(resaltar));
+  }
+  botonResaltar.addEventListener('click', () => {
+    resaltar = !resaltar;
+    vscode.setState({ ...(vscode.getState() || {}), resaltar });
+    aplicarResaltado();
+  });
+  aplicarResaltado();
+
+  // píldora «estás aquí»: sale cuando la fila de HEAD no se ve, con la flecha hacia donde está
+  const filaHead = () => /** @type {HTMLElement | null} */ (lista.querySelector('.fila.es-head'));
+  let observada = null;
+  const vigia = new IntersectionObserver(([e]) => mostrarAqui(!e.isIntersecting, e.boundingClientRect.top < 0));
+  function vigilarHead() {
+    const r = filaHead();
+    if (r === observada) { return; }
+    if (observada) { vigia.unobserve(observada); }
+    observada = r;
+    if (r) { vigia.observe(r); } else { mostrarAqui(!!actual, false); }
+  }
+  function mostrarAqui(si, arriba) {
+    aqui.hidden = !si || !actual || !!buscar.value.trim();
+    if (aqui.hidden) { return; }
+    aqui.textContent = `${arriba ? '↑' : '↓'} ${actual.nombre}`;
+    aqui.title = T.irAqui;
+  }
+  function irAHead() {
+    const r = filaHead();
+    if (!r) {
+      buscandoHead = 20; // no está cargada: se piden páginas hasta dar con ella
+      return seguirBuscandoHead();
+    }
+    buscandoHead = 0;
+    const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    r.scrollIntoView({ block: 'center', behavior: quieto ? 'auto' : 'smooth' });
+    r.classList.remove('destello');
+    void r.offsetWidth;
+    r.classList.add('destello');
+    r.focus({ preventScroll: true });
+  }
+  function seguirBuscandoHead() {
+    if (filaHead()) { return irAHead(); }
+    if (!hayMas || buscandoHead <= 0) { buscandoHead = 0; return; }
+    if (pidiendo) { return; }
+    buscandoHead--;
+    pidiendo = true;
+    fin.replaceChildren(...esqueletos(3));
+    vscode.postMessage({ tipo: 'mas' });
+  }
+  aqui.addEventListener('click', irAHead);
 
   function avisarCopiado(boton) {
     boton.classList.remove('copiado');

@@ -9,6 +9,9 @@
   "1 commit" and "1 author".
 - Commit graph: commit details open instantly the second time (they are kept while the graph is open), without the
   expand animation, and the loading placeholder only shows if loading takes a moment.
+- Commit graph: easier to find where you are among many branches. Commits that are not in the history of your HEAD
+  are dimmed (toggle it with the target button in the toolbar), and when your commit scrolls out of view a "↑ main"
+  / "↓ main" button takes you back to it, loading more commits if needed.
 
 - The commit graph redraws by itself when any branch, remote branch, tag or stash moves: VS Code's background
   auto-fetch (`git.autofetch`), a fetch or push from the terminal, or branches, tags and stashes made outside it.

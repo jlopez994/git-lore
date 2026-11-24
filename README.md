@@ -31,6 +31,8 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
     ones tinted, tags neutral). Hover a message, author or badge for the full text. A row above HEAD shows your
     uncommitted changes. Choose all branches, local branches or the current branch, filter by message, author, ref or
     SHA, and scroll to load more. Drag the graph's edge to make it wider (double-click to reset).
+    With many branches, commits outside the history of your HEAD are dimmed (toggle it from the toolbar) and a floating
+    button takes you back to your commit when it is out of view.
   - *Commit details:* click a commit (or press Enter; arrows move between rows) to open its message, author, parents and
     changed files inline. Each file opens its diff; right-click it to open it at that revision, compare it with the
     working file, open the working file, copy its path or restore it to that revision.

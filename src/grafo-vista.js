@@ -24,7 +24,7 @@ function html(webview, raizExt, nonce, id) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
     copiado: t('Copied'), sinCommits: t('No commits'), copiar: t('Copy SHA'), ficheros: t('Files'), padres: t('Parents'),
-    verCambios: t('Show in Source Control'), enWorktree: t('Checked out in worktree {0}'),
+    verCambios: t('Show in Source Control'), irAqui: t('Go to the current commit'), enWorktree: t('Checked out in worktree {0}'),
   };
   return `<!doctype html>
 <html lang="${vscode.env.language}">
@@ -43,11 +43,13 @@ function html(webview, raizExt, nonce, id) {
     <option value="actual">${t('Current branch')}</option>
   </select>
   <span id="cuenta" class="cuenta" aria-live="polite"></span>
+  <button id="resaltar" class="boton" aria-pressed="true" title="${t('Highlight the history of the current branch')}" aria-label="${t('Highlight the history of the current branch')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg></button>
   <button id="fetch" class="boton" title="${t('Fetch from all remotes')}" aria-label="${t('Fetch from all remotes')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v9m-4-4 4 4 4-4M2 14h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button id="refrescar" class="boton" title="${t('Refresh')}" aria-label="${t('Refresh')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </header>
 <main id="lista" class="lista" role="list"></main>
 <div id="fin" class="fin" aria-hidden="true"></div>
+<button id="aqui" class="aqui" hidden></button>
 <div id="tirador" class="tirador" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="24"
   aria-label="${t('Graph width')}" title="${t('Drag to resize the graph, double-click to reset')}"></div>
 <script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)};</script>
@@ -155,9 +157,12 @@ function abrir(context, repo) {
           refs,
           stash: !!c.stash,
           head: !c.stash && c.sha === head,
+          padres: c.padres, // para saber en el webview qué es historia de HEAD
         };
       });
-      enviar({ tipo: 'filas', filas, reiniciar, alcance, hayMas: commits.length === limite });
+      const h = repo.state.HEAD;
+      const actual = h && h.commit ? { sha: h.commit, nombre: h.name || h.commit.slice(0, 7) } : null;
+      enviar({ tipo: 'filas', filas, reiniciar, alcance, actual, hayMas: commits.length === limite });
     } catch (e) {
       if (mia === generacion) { enviar({ tipo: 'error', mensaje: e.message }); }
     } finally {
