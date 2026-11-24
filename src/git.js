@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 const {
-  parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+  parsearBlame, parsearLog, parsearShortlog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
@@ -155,6 +155,19 @@ async function dirComun(repo) {
   return path.resolve(repo.rootUri.fsPath, salida);
 }
 
+// HEAD explícito: sin revisión y sin terminal, shortlog se queda leyendo de la entrada estándar
+async function autores(repo) {
+  if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
+  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
+}
+
+// --fixed-strings con «<correo>»: coincide con ese correo exacto y no como expresión regular (un «+» en el correo)
+async function commitsDeAutor(repo, autor, limite = 200) {
+  const patron = autor.correo ? `<${autor.correo}>` : autor.nombre;
+  return parsearLog(await ejecutar(repo.rootUri.fsPath,
+    ['log', 'HEAD', '--fixed-strings', `--author=${patron}`, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+}
+
 async function stashes(repo) {
   return parsearStash(await ejecutar(repo.rootUri.fsPath, ['stash', 'list', `--format=${FORMATO_STASH}`]));
 }
@@ -238,5 +251,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, commitsDeAutor, ErrorGit,
 };

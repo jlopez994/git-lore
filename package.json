@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -32,6 +32,7 @@
     "line history",
     "visual history",
     "commit graph",
+    "contributors",
     "git graph",
     "stash",
     "worktree",
@@ -258,6 +259,12 @@
         "title": "%command.nextRevision%",
         "category": "Git Lore",
         "icon": "$(arrow-right)"
+      },
+      {
+        "command": "gitLore.refreshContributors",
+        "title": "%command.refresh%",
+        "category": "Git Lore",
+        "icon": "$(refresh)"
       }
     ],
     "menus": {
@@ -389,6 +396,10 @@
         {
           "command": "gitLore.nextRevision",
           "when": "resourceScheme == git"
+        },
+        {
+          "command": "gitLore.refreshContributors",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -481,27 +492,32 @@
           "command": "gitLore.compareRefs",
           "when": "view == gitLore.compare",
           "group": "navigation@2"
+        },
+        {
+          "command": "gitLore.refreshContributors",
+          "when": "view == gitLore.contributors",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "gitLore.showCommit",
-          "when": "view == gitLore.history && viewItem == commit",
+          "when": "view =~ /^gitLore\\.(history|contributors)$/ && viewItem == commit",
           "group": "inline@1"
         },
         {
           "command": "gitLore.showCommit",
-          "when": "view == gitLore.history && viewItem == commit",
+          "when": "view =~ /^gitLore\\.(history|contributors)$/ && viewItem == commit",
           "group": "1_commit@1"
         },
         {
           "command": "gitLore.copySha",
-          "when": "view == gitLore.history && viewItem == commit",
+          "when": "view =~ /^gitLore\\.(history|contributors)$/ && viewItem == commit",
           "group": "1_commit@2"
         },
         {
           "command": "gitLore.openOnRemote",
-          "when": "view == gitLore.history && viewItem == commit",
+          "when": "view =~ /^gitLore\\.(history|contributors)$/ && viewItem == commit",
           "group": "1_commit@3"
         }
       ],
@@ -639,6 +655,11 @@
           "id": "gitLore.history",
           "name": "%view.history%",
           "icon": "$(history)"
+        },
+        {
+          "id": "gitLore.contributors",
+          "name": "%view.contributors%",
+          "icon": "$(organization)"
         },
         {
           "id": "gitLore.compare",

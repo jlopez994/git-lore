@@ -17,6 +17,8 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
 - **File history and line history.** A *File History* view in the Source Control panel follows the active editor and
   lists every commit that touched the file, renames included. Select some lines and run `Show Line History` (editor
   context menu) to see only the commits that changed them. Click a commit to open its diff.
+- **Contributors.** A *Contributors* view in the Source Control panel lists everyone who committed to the current
+  branch, by number of commits. Expand a person to see their commits; click one for its files and diffs.
 - **Visual file history.** `Show Visual File History` (editor context menu, Explorer, or the icon in the File History
   view) puts every commit to a file on a timeline: one row per author, dots sized by the lines changed, and added and
   deleted lines underneath. Hover a dot for the commit, click it for its diff, or move between commits with the arrow

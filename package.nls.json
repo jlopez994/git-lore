@@ -42,5 +42,6 @@
   "command.graph.dropStash": "Drop Stash…",
   "command.graph.openWorktree": "Open Worktree in New Window",
   "command.previousRevision": "Open Previous Revision",
-  "command.nextRevision": "Open Next Revision"
+  "command.nextRevision": "Open Next Revision",
+  "view.contributors": "Contributors"
 }

@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.6.1
+## 0.7.0
+
+- Contributors view in the Source Control panel: everyone who committed to the current branch, by number of commits
+  (one person per email, even with several names). Expand someone to see their commits and click one for its files.
+  The same commit menu as File History: copy the SHA, open it on the remote.
 
 - The commit graph redraws by itself when any branch, remote branch, tag or stash moves: VS Code's background
   auto-fetch (`git.autofetch`), a fetch or push from the terminal, or branches, tags and stashes made outside it.

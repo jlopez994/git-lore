@@ -65,6 +65,7 @@
   "Restore": "Restaurar",
   "Restore {0} to its version in {1}?": "¿Restaurar {0} a su versión de {1}?",
   "Show commit": "Ver commit",
+  "Show Commit Files": "Ver ficheros del commit",
   "Show Commit Graph": "Ver grafo de commits",
   "Show in Source Control": "Ver en Control de código fuente",
   "Show output": "Ver salida",

@@ -245,3 +245,12 @@ test('historia: un merge sin name-status toma la ruta del commit anterior, no la
   assert.strictEqual(c.get('c2').rutaAnterior, 'viejo.txt');
   assert.strictEqual(c.get('c0').refAnterior, null);
 });
+
+test('contribuidores: shortlog agrupado por correo, con el nombre más usado', () => {
+  const { parsearShortlog } = require('../src/nucleo/parseo');
+  const a = parsearShortlog('    10\tAna López <ana@x.com>\n     3\tBea <bea@x.com>\n     2\tana <ANA@x.com>\n');
+  assert.deepStrictEqual(a, [{ nombre: 'Ana López', correo: 'ana@x.com', commits: 12 }, { nombre: 'Bea', correo: 'bea@x.com', commits: 3 }]);
+  // real: en el repo de prueba Ana (2) y Bea (1) firman con el mismo correo, así que son una persona: Ana
+  const real = parsearShortlog(git('shortlog', '-sne', 'HEAD'));
+  assert.deepStrictEqual(real.map(x => [x.nombre, x.commits]), [['Ana', 3]]);
+});
