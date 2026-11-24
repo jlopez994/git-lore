@@ -8,8 +8,9 @@
   // espiral a lo ancho para llenar un panel apaisado
   function empaquetar(radios, { hueco = 2, aspecto = 1 } = {}) {
     const sitios = [];
-    const menor = Math.min(...radios.filter(r => r > 0));
-    const paso = Number.isFinite(menor) ? Math.max(0.5, menor / 4) : 1; // sin radios positivos, un paso cualquiera
+    const positivos = radios.filter(r => r > 0);
+    // relativo también al mayor: con 10.000 commits frente a 1, un paso del menor daría millones de vueltas
+    const paso = positivos.length ? Math.max(0.5, Math.min(...positivos), Math.max(...positivos) / 50) / 4 : 1;
     for (const r of radios) {
       let x = 0;
       let y = 0;

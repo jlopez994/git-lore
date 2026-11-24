@@ -41,7 +41,7 @@ function html(webview, raizExt, nonce) {
 </html>`;
 }
 
-function abrir(context, repo) {
+function abrir(context, repo, log) {
   const raiz = repo.rootUri.fsPath;
   const existente = paneles.get(raiz);
   if (existente) {
@@ -58,6 +58,7 @@ function abrir(context, repo) {
   let cerrado = false;
   let generacion = 0;
   let cancelar = null;
+  let hechas = null; // { commit, lineas }: volver a abrir el panel en el mismo commit no recorre otra vez la historia
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
 
   // primero los commits (shortlog es rápido) y luego las líneas, que recorren toda la historia
@@ -76,12 +77,20 @@ function abrir(context, repo) {
         rama: head ? head.name || (head.commit && corto(head.commit)) : '',
         personas: personas.map((p, i) => ({ ...p, clave: claveDePersona(p.correo, p.nombre), color: i < COLORES ? i : null })),
       });
-      // si fallan las líneas, el gráfico de commits ya pintado se queda: sus celdas salen vacías
-      const lineas = await git.lineasPorAutor(repo, token).catch(e => {
-        if (e instanceof vscode.CancellationError) { throw e; }
-        return new Map();
-      });
-      if (mia === generacion) { enviar({ tipo: 'lineas', lineas: Object.fromEntries(lineas) }); }
+      const commit = head && head.commit;
+      if (!hechas || hechas.commit !== commit) {
+        // si fallan las líneas, el gráfico de commits ya pintado se queda: sus celdas salen vacías
+        // shortcut: la salida de --numstat entera va a memoria; en repos enormes (Linux) puede fallar, y entonces
+        // haría falta leerla por streaming
+        const lineas = await git.lineasPorAutor(repo, token).catch(e => {
+          if (e instanceof vscode.CancellationError) { throw e; }
+          log(`contributors chart: ${e.message}`);
+          return null;
+        });
+        if (mia !== generacion) { return; }
+        hechas = lineas ? { commit, lineas: Object.fromEntries(lineas) } : null;
+      }
+      if (mia === generacion) { enviar({ tipo: 'lineas', lineas: hechas ? hechas.lineas : {} }); }
     } catch (e) {
       if (e instanceof vscode.CancellationError || mia !== generacion) { return; }
       enviar({ tipo: 'error', mensaje: e.message });
@@ -112,13 +121,13 @@ function abrir(context, repo) {
 }
 
 // sin argumento va el repo que enseña la vista Contributors; desde la paleta sin esa vista, el del editor o el primero
-function registrar(context, protegido, repoDeContribuidores) {
+function registrar(context, protegido, log, repoDeContribuidores) {
   context.subscriptions.push(vscode.commands.registerCommand('gitLore.contributorsChart', () => protegido(async () => {
     const api = await git.obtenerApi();
     const editor = vscode.window.activeTextEditor;
     const repo = repoDeContribuidores() || (editor && api.getRepository(editor.document.uri)) || api.repositories[0];
     if (!repo) { return vscode.window.showWarningMessage(t('Open a folder with a git repository first')); }
-    abrir(context, repo);
+    abrir(context, repo, log);
   })));
 }
 
