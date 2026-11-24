@@ -227,7 +227,10 @@ function abrir(context, repo) {
         const cfg = vscode.workspace.getConfiguration('gitLore');
         const enWorkspace = cfg.inspect(RESALTAR).workspaceValue !== undefined;
         return cfg.update(RESALTAR, m.valor, enWorkspace ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global)
-          .then(undefined, e => vscode.window.showErrorMessage(e.message));
+          .then(undefined, e => {
+            vscode.window.showErrorMessage(e.message);
+            enviar({ tipo: 'resaltar', valor: resaltarAhora() }); // el botón cambió antes de guardar: vuelve al real
+          });
       }
       if (m.tipo === 'verCambios') { return vscode.commands.executeCommand('workbench.view.scm'); }
       if (m.tipo === 'fetch') {
