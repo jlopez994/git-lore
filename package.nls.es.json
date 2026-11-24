@@ -19,5 +19,21 @@
   "color.currentLine": "Color del blame al final de la línea actual.",
   "color.fileBlame": "Color del texto de la columna de blame del fichero.",
   "color.fileBlameBackground": "Fondo de la columna de blame del fichero.",
-  "config.currentLine": "Muestra al final de la línea actual quién la cambió por última vez y cuándo."
+  "config.currentLine": "Muestra al final de la línea actual quién la cambió por última vez y cuándo.",
+  "command.graph.checkout": "Hacer checkout",
+  "command.graph.createBranch": "Crear rama…",
+  "command.graph.createTag": "Crear tag…",
+  "command.graph.merge": "Fusionar en la rama actual",
+  "command.graph.cherryPick": "Hacer cherry-pick",
+  "command.graph.revert": "Revertir commit",
+  "command.graph.reset": "Reset de la rama actual a este commit…",
+  "command.graph.deleteBranch": "Borrar rama…",
+  "command.graph.deleteTag": "Borrar tag…",
+  "command.graph.openDiff": "Abrir cambios",
+  "command.graph.openRevision": "Abrir el fichero en esta revisión",
+  "command.graph.compareWorking": "Comparar con el fichero actual",
+  "command.graph.openFile": "Abrir el fichero",
+  "command.graph.copyPath": "Copiar ruta",
+  "command.graph.copyRelativePath": "Copiar ruta relativa",
+  "command.graph.restoreFile": "Restaurar el fichero a esta revisión…"
 }

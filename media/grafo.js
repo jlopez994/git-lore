@@ -4,7 +4,7 @@
   const vscode = acquireVsCodeApi();
   const T = window.TEXTOS;
   const ALTO = 28;
-  const CARRIL = 16;
+  const CARRIL = 12;
   const NS = 'http://www.w3.org/2000/svg';
   const COLORES = 8;
 
@@ -14,11 +14,15 @@
   const cuenta = document.getElementById('cuenta');
   const fin = document.getElementById('fin');
   const refrescar = document.getElementById('refrescar');
+  const traer = document.getElementById('fetch');
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
   let pidiendo = false;
   let anchoMax = 1;
+  const tirador = document.getElementById('tirador');
+  // ancho del grafo elegido arrastrando el borde (0 = automático); getState sobrevive a ocultar el panel
+  let anchoUsuario = (vscode.getState() || {}).anchoGrafo || 0;
   /** @type {HTMLElement | null} */
   let detalle = null;
 
@@ -77,11 +81,15 @@
     return g;
   }
 
-  function insignia(ref) {
-    const head = ref.startsWith('HEAD -> ');
-    const nombre = head ? ref.slice(8) : ref;
-    const tipo = nombre.startsWith('tag: ') ? 'tag' : head ? 'head' : nombre.includes('/') ? 'remota' : 'rama';
-    return el('span', `ref ${tipo}`, nombre.replace(/^tag: /, ''));
+  // el menú contextual nativo lee esto: webviewSection decide qué entradas salen (package.json, webview/context)
+  function contexto(e, datos) {
+    e.dataset.vscodeContext = JSON.stringify({ ...datos, panel: window.PANEL, preventDefaultContextMenuItems: true });
+  }
+
+  function insignia(ref, sha) {
+    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
+    contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
+    return e;
   }
 
   function fila(f, i) {
@@ -92,10 +100,11 @@
     r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
-    f.refs.filter(ref => ref !== 'HEAD' && !ref.endsWith('/HEAD')).forEach(ref => texto.appendChild(insignia(ref)));
+    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha)));
     texto.appendChild(el('span', 'resumen', f.resumen));
-    r.dataset.busqueda = `${f.resumen} ${f.autor} ${f.refs.join(' ')} ${f.sha}`.toLowerCase();
+    r.dataset.busqueda = `${f.resumen} ${f.autor} ${f.refs.map(ref => ref.nombre).join(' ')} ${f.sha}`.toLowerCase();
     if (f.pendiente) {
+      contexto(r, { webviewSection: 'pendiente' });
       r.classList.add('pendiente');
       r.dataset.pendiente = '1';
       r.title = T.verCambios;
@@ -107,7 +116,10 @@
     sha.dataset.accion = 'copiar';
     const fecha = el('span', 'fecha', f.fecha);
     fecha.title = f.fechaCompleta;
-    r.append(grafico(f), texto, el('span', 'autor', f.autor), fecha, sha);
+    const autor = el('span', 'autor', f.autor);
+    autor.title = f.correo ? `${f.autor} <${f.correo}>` : f.autor;
+    r.append(grafico(f), texto, autor, fecha, sha);
+    contexto(r, { webviewSection: 'commit', sha: f.sha });
     r.setAttribute('aria-expanded', 'false');
     return r;
   }
@@ -130,6 +142,7 @@
   buscar.addEventListener('input', () => {
     document.body.classList.toggle('filtrando', !!buscar.value.trim());
     filtrar();
+    pedirMas();
   });
 
   alcance.addEventListener('change', () => {
@@ -153,6 +166,7 @@
 
   function cargando(si) {
     refrescar.classList.toggle('girando', si);
+    if (!si) { traer.disabled = false; }
     lista.setAttribute('aria-busy', String(si));
   }
 
@@ -220,6 +234,7 @@
     m.ficheros.forEach((f, i) => {
       const b = el('button', `fichero e${f.estado}`);
       b.dataset.indice = String(i);
+      contexto(b, { webviewSection: 'fichero', sha: m.sha, indice: i, estadoFichero: f.estado });
       const corte = f.ruta.lastIndexOf('/');
       b.append(el('span', 'estado', f.estado), el('span', 'nombre', f.ruta.slice(corte + 1)),
         el('span', 'ruta', f.rutaAnterior ? `${f.rutaAnterior} →` : f.ruta.slice(0, Math.max(corte, 0))));
@@ -252,7 +267,10 @@
     fin.replaceChildren();
     hayMas = m.hayMas;
     const antes = anchoMax;
-    anchoMax = Math.max(anchoMax, ...m.filas.map(f => f.ancho));
+    // al recargar (otro alcance, tras una acción) el ancho se vuelve a medir: si no, solo crecería
+    anchoMax = Math.max(m.reiniciar ? 1 : anchoMax, ...m.filas.map(f => f.ancho));
+    // una recarga (cambios en el repo, tras una acción) no debe cerrar el commit que se estaba mirando
+    const reabrir = m.reiniciar && detalle ? detalle.dataset.sha : null;
     if (m.reiniciar) {
       filas = [];
       porSha.clear();
@@ -266,13 +284,20 @@
       // carriles nuevos: todas las filas comparten ancho de grafo para que las columnas cuadren
       lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoMax * CARRIL)));
     }
+    ajustarAncho();
     filas = filas.concat(m.filas.filter(f => !f.pendiente));
     m.filas.forEach(f => porSha.set(f.sha, f));
     const frag = document.createDocumentFragment();
     m.filas.forEach((f, i) => frag.appendChild(fila(f, i)));
     lista.appendChild(frag);
     if (!filas.length) { lista.replaceChildren(el('p', 'aviso', T.sinCommits)); }
+    const abierta = reabrir && [...lista.querySelectorAll('.fila')].find(r => (/** @type {HTMLElement} */ (r)).dataset.sha === reabrir);
+    if (abierta) {
+      abierta.classList.add('seleccionada');
+      abrirDetalle(abierta);
+    }
     filtrar();
+    requestAnimationFrame(pedirMas); // una página que no llena la pantalla pide la siguiente
   });
 
   function avisarCopiado(boton) {
@@ -315,6 +340,12 @@
     const r = /** @type {HTMLElement} */ (e.target);
     if (!esFila(r)) { return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.click(); }
+    // el menú contextual nativo solo sale con el ratón: desde el teclado se le manda el evento a la fila
+    if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+      e.preventDefault();
+      const caja = r.getBoundingClientRect();
+      r.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: caja.left + 48, clientY: caja.bottom }));
+    }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const paso = n => (e.key === 'ArrowDown' ? n.nextElementSibling : n.previousElementSibling);
@@ -324,19 +355,59 @@
     }
   });
 
+  // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
+  function ajustarAncho() {
+    const total = anchoMax * CARRIL;
+    const visible = Math.min(total, anchoUsuario || Math.max(8 * CARRIL, Math.round(innerWidth * 0.2)));
+    document.body.style.setProperty('--grafo', `${visible}px`);
+    document.body.classList.toggle('recortado', visible < total);
+    tirador.setAttribute('aria-valuenow', String(visible));
+  }
+
+  function fijarAncho(px) {
+    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoMax * CARRIL, Math.round(px)));
+    ajustarAncho();
+    vscode.setState({ ...(vscode.getState() || {}), anchoGrafo: anchoUsuario });
+  }
+
+  tirador.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    tirador.setPointerCapture(e.pointerId);
+    const origen = lista.getBoundingClientRect().left + 8; // el padding izquierdo de .fila
+    const mover = ev => fijarAncho(ev.clientX - origen);
+    tirador.addEventListener('pointermove', mover);
+    tirador.addEventListener('lostpointercapture', () => tirador.removeEventListener('pointermove', mover), { once: true });
+  });
+  tirador.addEventListener('dblclick', () => fijarAncho(0));
+  tirador.addEventListener('keydown', e => {
+    const paso = { ArrowLeft: -CARRIL, ArrowRight: CARRIL }[e.key];
+    if (paso) { e.preventDefault(); fijarAncho(parseFloat(getComputedStyle(document.body).getPropertyValue('--grafo')) + paso); }
+  });
+  window.addEventListener('resize', ajustarAncho);
+
+  traer.addEventListener('click', () => {
+    traer.disabled = true;
+    cargando(true);
+    vscode.postMessage({ tipo: 'fetch' });
+  });
+
   refrescar.addEventListener('click', () => {
     cerrarDetalle();
     esqueleto();
     vscode.postMessage({ tipo: 'refrescar' });
   });
 
-  new IntersectionObserver(entradas => {
-    if (entradas.some(en => en.isIntersecting) && hayMas && !pidiendo && !buscar.value.trim()) {
-      pidiendo = true;
-      fin.replaceChildren(...esqueletos(3));
-      vscode.postMessage({ tipo: 'mas' });
-    }
-  }, { rootMargin: '400px' }).observe(fin);
+  // se comprueba en cada scroll y tras cada carga, no solo cuando el final entra en pantalla: si ya estaba a la vista
+  // al acabar una recarga o al quitar el filtro, un IntersectionObserver no volvería a avisar
+  function pedirMas() {
+    if (!hayMas || pidiendo || buscar.value.trim() || fin.getBoundingClientRect().top > innerHeight + 400) { return; }
+    pidiendo = true;
+    fin.replaceChildren(...esqueletos(3));
+    vscode.postMessage({ tipo: 'mas' });
+  }
+  window.addEventListener('scroll', pedirMas, { passive: true });
+  window.addEventListener('resize', pedirMas);
+  document.addEventListener('visibilitychange', pedirMas);
 
   esqueleto();
   vscode.postMessage({ tipo: 'listo' });

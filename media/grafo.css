@@ -82,7 +82,13 @@ body {
   transition: background .15s ease-out, transform .2s var(--muelle);
 }
 .boton:hover { background: var(--vscode-toolbar-hoverBackground); }
-.boton:active { transform: scale(.9) rotate(-90deg); }
+.boton { display: inline-grid; place-items: center; padding: 0; }
+.boton:active { transform: scale(.9); }
+#refrescar svg { transition: transform .2s var(--muelle); }
+#refrescar:active svg { transform: rotate(-90deg); }
+#fetch:active svg { transform: translateY(2px); }
+#fetch svg { transition: transform .2s var(--muelle); }
+.boton:disabled { opacity: .5; cursor: default; }
 
 .lista { padding-bottom: 8px; }
 
@@ -110,7 +116,26 @@ body {
 
 @keyframes entrar { from { opacity: 0; transform: translateY(4px); } }
 
-.grafo { display: block; overflow: visible; }
+.grafo { display: block; }
+.grafo, .carriles { width: var(--grafo, auto); overflow: hidden; }
+/* carriles cortados por el tope de ancho: que se vea que siguen */
+.recortado .grafo, .recortado .carriles { mask-image: linear-gradient(to right, #000 calc(100% - 12px), transparent); }
+
+.tirador {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: calc(8px + var(--grafo, 0px) + 1px);
+  z-index: 1;
+  width: 8px;
+  cursor: col-resize;
+  outline: none;
+  transition: background .15s ease-out;
+}
+.tirador:hover, .tirador:focus-visible, .tirador:active {
+  background: linear-gradient(to right, transparent 3px, var(--vscode-sash-hoverBorder, var(--vscode-focusBorder)) 3px 5px, transparent 5px);
+}
+.filtrando .tirador { display: none; }
 .grafo path {
   fill: none;
   stroke-width: 2;
@@ -204,7 +229,7 @@ body {
   animation: desplegar .22s var(--salida) both;
 }
 @keyframes desplegar { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
-.carriles { display: block; height: 100%; overflow: visible; }
+.carriles { display: block; height: 100%; }
 .carriles line { stroke-width: 2; stroke-linecap: round; }
 
 .cuerpo {
@@ -295,7 +320,8 @@ body {
 .hueso.corto { justify-self: end; width: 4.5em; }
 @keyframes brillo { from { background-position: 100% 0, 0 0; } to { background-position: -50% 0, 0 0; } }
 
-.boton.girando { animation: girar .9s linear infinite; }
+/* gira el icono, no el botón: el fondo del hover es un cuadrado */
+.boton.girando svg { animation: girar .9s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 
 .aviso { padding: 24px 12px; color: var(--suave); text-align: center; }
@@ -312,5 +338,5 @@ body {
   *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
   .grafo path { stroke-dashoffset: 0; }
   /* una animación infinita a 1 ms parpadearía */
-  .hueso, .boton.girando { animation: none !important; }
+  .hueso, .boton.girando svg { animation: none !important; }
 }

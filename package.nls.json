@@ -19,5 +19,21 @@
   "color.currentLine": "Color of the blame shown at the end of the current line.",
   "color.fileBlame": "Text color of the file blame column.",
   "color.fileBlameBackground": "Background of the file blame column.",
-  "config.currentLine": "Show who last changed the current line, and when, at the end of the line."
+  "config.currentLine": "Show who last changed the current line, and when, at the end of the line.",
+  "command.graph.checkout": "Checkout",
+  "command.graph.createBranch": "Create Branch…",
+  "command.graph.createTag": "Create Tag…",
+  "command.graph.merge": "Merge into Current Branch",
+  "command.graph.cherryPick": "Cherry-Pick Commit",
+  "command.graph.revert": "Revert Commit",
+  "command.graph.reset": "Reset Current Branch to Here…",
+  "command.graph.deleteBranch": "Delete Branch…",
+  "command.graph.deleteTag": "Delete Tag…",
+  "command.graph.openDiff": "Open Changes",
+  "command.graph.openRevision": "Open File at This Revision",
+  "command.graph.compareWorking": "Compare with Working File",
+  "command.graph.openFile": "Open File",
+  "command.graph.copyPath": "Copy Path",
+  "command.graph.copyRelativePath": "Copy Relative Path",
+  "command.graph.restoreFile": "Restore File to This Revision…"
 }

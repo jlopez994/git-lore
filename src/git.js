@@ -26,13 +26,13 @@ class ErrorGit extends Error {
   }
 }
 
-function ejecutar(cwd, args, { entrada, token } = {}) {
+function ejecutar(cwd, args, { entrada, token, entorno } = {}) {
   return new Promise((resolver, rechazar) => {
     const proc = cp.spawn(api.git.path, ['-c', 'core.quotePath=false', ...args], {
       cwd,
       windowsHide: true,
       // solo lectura: que diff/status no tomen el lock del índice y choquen con los comandos del usuario
-      env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', ...entorno },
     });
     const salida = [];
     const errores = [];
@@ -99,7 +99,8 @@ const ALCANCES = {
 async function grafo(repo, { saltar = 0, limite = 300, alcance = 'todas' } = {}) {
   // repo recién creado: «git log HEAD» fallaría con «unknown revision»
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
-  const args = ['log', ...ALCANCES[alcance], '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
+  // refs completas: el tipo de cada insignia sale del prefijo y no de si el nombre lleva «/»
+  const args = ['log', ...ALCANCES[alcance], '--decorate=full', '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args));
 }
 
@@ -109,7 +110,7 @@ async function refs(repo) {
   return salida.split('\n').filter(Boolean).map(l => {
     const [completo, nombre] = l.split('\x1f');
     const tipo = completo.startsWith('refs/heads/') ? 'rama' : completo.startsWith('refs/tags/') ? 'tag' : 'remota';
-    return { nombre, tipo };
+    return { nombre, tipo, completo };
   }).filter(r => !r.nombre.endsWith('/HEAD'));
 }
 
@@ -131,6 +132,46 @@ async function diferencias(repo, desde, hasta) {
   return parsearDiff(await ejecutar(repo.rootUri.fsPath, args));
 }
 
+// Lo que la API de vscode.git no tiene. Sin TTY, un editor o una pregunta de git colgarían la acción: que fallen
+const SIN_TTY = { GIT_EDITOR: 'true', GIT_TERMINAL_PROMPT: '0' };
+async function modificar(repo, args) {
+  try {
+    await ejecutar(repo.rootUri.fsPath, args, { entorno: SIN_TTY });
+  } finally {
+    await repo.status().catch(() => { }); // también tras un conflicto; si falla, que no tape el error de git
+  }
+}
+
+// un merge pide -m: se toma el primer padre, la rama en la que se fusionó
+async function opcionMerge(repo, sha) {
+  const linea = (await ejecutar(repo.rootUri.fsPath, ['rev-list', '--parents', '-n1', sha])).trim();
+  return linea.split(' ').length > 2 ? ['-m', '1'] : [];
+}
+
+async function cherryPick(repo, sha) {
+  return modificar(repo, ['cherry-pick', ...(await opcionMerge(repo, sha)), sha]);
+}
+
+async function revertir(repo, sha) {
+  return modificar(repo, ['revert', '--no-edit', ...(await opcionMerge(repo, sha)), sha]);
+}
+
+// repo.tag() de la API toma el 2.º argumento como mensaje en unas versiones y como ref en otras
+async function crearTag(repo, nombre, sha) {
+  return modificar(repo, ['tag', nombre, sha]);
+}
+
+// «--» y una ruta que sale del propio commit: nada de opciones colándose
+async function restaurarFichero(repo, sha, ruta) {
+  return modificar(repo, ['checkout', sha, '--', ruta]);
+}
+
+const MODOS_RESET = ['soft', 'mixed', 'hard'];
+async function resetear(repo, sha, modo) {
+  if (!MODOS_RESET.includes(modo)) { throw new Error(`reset --${modo}`); }
+  return modificar(repo, ['reset', `--${modo}`, sha]);
+}
+
 function webDe(repo) {
   const r = elegirRemoto(repo.state.remotes, repo.state.HEAD && repo.state.HEAD.upstream && repo.state.HEAD.upstream.remote);
   return r ? webDeRemoto(r.fetchUrl || r.pushUrl) : null;
@@ -143,5 +184,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, ErrorGit,
 };
