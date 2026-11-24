@@ -508,7 +508,7 @@
         },
         {
           "command": "gitLore.graph.restoreFile",
-          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D && estadoFichero != R",
           "group": "9_restaurar@1"
         }
       ]
