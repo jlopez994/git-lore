@@ -76,7 +76,11 @@ function abrir(context, repo) {
         rama: head ? head.name || (head.commit && corto(head.commit)) : '',
         personas: personas.map((p, i) => ({ ...p, clave: claveDePersona(p.correo, p.nombre), color: i < COLORES ? i : null })),
       });
-      const lineas = await git.lineasPorAutor(repo, token);
+      // si fallan las líneas, el gráfico de commits ya pintado se queda: sus celdas salen vacías
+      const lineas = await git.lineasPorAutor(repo, token).catch(e => {
+        if (e instanceof vscode.CancellationError) { throw e; }
+        return new Map();
+      });
       if (mia === generacion) { enviar({ tipo: 'lineas', lineas: Object.fromEntries(lineas) }); }
     } catch (e) {
       if (e instanceof vscode.CancellationError || mia !== generacion) { return; }

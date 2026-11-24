@@ -8,12 +8,14 @@
   // espiral a lo ancho para llenar un panel apaisado
   function empaquetar(radios, { hueco = 2, aspecto = 1 } = {}) {
     const sitios = [];
-    const paso = Math.max(0.5, Math.min(...radios.filter(r => r > 0)) / 4);
+    const menor = Math.min(...radios.filter(r => r > 0));
+    const paso = Number.isFinite(menor) ? Math.max(0.5, menor / 4) : 1; // sin radios positivos, un paso cualquiera
     for (const r of radios) {
       let x = 0;
       let y = 0;
       if (sitios.length) {
-        for (let a = 0; a < 2000; a += 0.05) {
+        // sin tope: la espiral acaba saliendo de todo lo ya colocado
+        for (let a = 0; ; a += 0.05) {
           const d = paso * a;
           x = d * Math.cos(a) * aspecto;
           y = d * Math.sin(a);

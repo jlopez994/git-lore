@@ -88,8 +88,11 @@
     lienzo.replaceChildren(dibujo);
   }
 
+  // hasOwn: alguien sin correo llamado «constructor» no debe leer lo heredado de Object
+  const lineasDe = clave => (lineas && clave && Object.hasOwn(lineas, clave) ? lineas[clave] : null);
+
   function celdaLineas(td, p) {
-    const l = lineas && lineas[p.clave];
+    const l = lineasDe(p.clave);
     td.replaceChildren();
     td.removeAttribute('title');
     if (!lineas) { td.textContent = '…'; return; }
@@ -146,6 +149,7 @@
     reparto.append(lienzo, tabla);
     reparto.classList.toggle('animar', animar && !quieto.matches);
     animar = false;
+    anchoPintado = 0; // lienzo nuevo: si ahora mide 0 (panel oculto), el ResizeObserver lo dibuja al volver
     dibujarBurbujas();
   }
 
@@ -154,7 +158,7 @@
     const partes = [el('strong', '', quien.nombre)];
     if (quien.correo) { partes.push(el('span', 'suave', quien.correo)); }
     partes.push(el('span', '', `${cuantos(quien.commits, T.unCommit, T.commits)} · ${porcentaje(quien.commits)}`));
-    const l = lineas && quien.clave && lineas[quien.clave];
+    const l = lineasDe(quien.clave);
     if (l) {
       const s = el('span');
       s.append(el('span', 'mas', `+${numero.format(l.mas)}`), el('span', 'menos', ` −${numero.format(l.menos)}`));
