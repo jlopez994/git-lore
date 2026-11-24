@@ -7,6 +7,7 @@ const historial = require('./src/historial');
 const comparar = require('./src/comparar');
 const grafo = require('./src/grafo-vista');
 const historia = require('./src/historia-vista');
+const revisiones = require('./src/revisiones');
 
 const t = vscode.l10n.t;
 let salida;
@@ -59,6 +60,7 @@ function activate(context) {
   comparar.registrar(context, protegido);
   grafo.registrar(context, protegido);
   historia.registrar(context, protegido, ficheroDelHistorial);
+  revisiones.registrar(context, protegido);
 }
 
 function deactivate() { }

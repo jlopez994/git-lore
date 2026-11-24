@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+
+- Step through a file's revisions from the editor title: ← opens the diff of the previous commit to the file, → the
+  next one, and from the newest commit → goes back to the working file. It follows renames.
+
 ## 0.5.0
 
 - Visual File History: `Show Visual File History` (editor and tab context menus, Explorer, or the icon in the File

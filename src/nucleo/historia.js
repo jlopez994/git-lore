@@ -24,4 +24,18 @@ function agruparAutores(commits, max = 7) {
   return { autores, filaDe };
 }
 
-module.exports = { agruparAutores };
+// un merge sale de --follow sin name-status: su ruta es la del commit anterior que tocó el fichero, no la actual
+// (si se renombró después, «sha:rutaActual» no existiría en esa revisión)
+function cambiosDe(commits, rutaActual) {
+  const cambios = new Map();
+  let ruta = null;
+  for (let i = commits.length - 1; i >= 0; i--) {
+    const c = commits[i];
+    const f = c.ficheros[0] || { ruta: ruta || rutaActual, estado: 'M' };
+    ruta = f.ruta;
+    cambios.set(c.sha, { sha: c.sha, ruta: f.ruta, rutaAnterior: f.rutaAnterior, estado: f.estado, refAnterior: c.padres.length ? undefined : null });
+  }
+  return cambios;
+}
+
+module.exports = { agruparAutores, cambiosDe };

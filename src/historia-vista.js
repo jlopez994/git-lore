@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 const vscode = require('vscode');
 const git = require('./git');
-const { agruparAutores } = require('./nucleo/historia');
+const { agruparAutores, cambiosDe } = require('./nucleo/historia');
 const { abrirCambios, relativa } = require('./acciones');
 
 const t = vscode.l10n.t;
@@ -36,20 +36,6 @@ function html(webview, raizExt, nonce) {
 <script nonce="${nonce}" src="${recurso('historia.js')}"></script>
 </body>
 </html>`;
-}
-
-// un merge sale de --follow sin name-status: su ruta es la del commit anterior que tocó el fichero, no la actual
-// (si se renombró después, «sha:rutaActual» no existiría en esa revisión)
-function cambiosDe(commits, rutaActual) {
-  const cambios = new Map();
-  let ruta = null;
-  for (let i = commits.length - 1; i >= 0; i--) {
-    const c = commits[i];
-    const f = c.ficheros[0] || { ruta: ruta || rutaActual, estado: 'M' };
-    ruta = f.ruta;
-    cambios.set(c.sha, { sha: c.sha, ruta: f.ruta, rutaAnterior: f.rutaAnterior, estado: f.estado, refAnterior: c.padres.length ? undefined : null });
-  }
-  return cambios;
 }
 
 async function datos(repo, uri) {
