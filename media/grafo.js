@@ -375,7 +375,7 @@
   // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
   function ajustarAncho() {
     const total = anchoMax * CARRIL;
-    const visible = Math.min(total, anchoUsuario || Math.max(8 * CARRIL, Math.round(innerWidth * 0.2)));
+    const visible = Math.min(total, anchoUsuario || Math.max(6 * CARRIL, Math.round(innerWidth * 0.15)));
     document.body.style.setProperty('--grafo', `${visible}px`);
     document.body.classList.toggle('recortado', visible < total);
     tirador.setAttribute('aria-valuenow', String(visible));

@@ -9,6 +9,8 @@
 - Commit graph: livelier colors, with its own vivid palette (a darker one for light themes; high contrast keeps the
   theme's), and branch badges in the color of their lane: local branches filled, remote ones tinted, tags neutral, each
   with an icon.
+- Commit graph: more room for the message. The graph takes at most 15% of the panel by default (drag its edge for
+  more), and the author, date and SHA columns are narrower.
 
 ## 0.4.1
 
