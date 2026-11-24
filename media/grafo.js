@@ -128,7 +128,10 @@
     r.setAttribute('role', 'listitem');
     r.tabIndex = 0;
     r.dataset.sha = f.sha;
-    r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
+    // la persiana cubre justo las filas que caben en pantalla (unos 450 ms en total); con un tope fijo de filas, en
+    // una pantalla alta todas las de debajo del tope entraban de golpe a media altura
+    const visibles = Math.ceil(innerHeight / ALTO) + 1;
+    r.style.setProperty('--retardo', `${Math.round(Math.min(i, visibles) * Math.min(30, 450 / visibles))}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
     f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha, f.col)));
