@@ -18,6 +18,7 @@
   /** @type {SVGElement[]} */
   let puntos = [];
   let activo = 0;
+  let anchoPintado = 0;
 
   const fmt = (s, ...v) => v.reduce((r, x, i) => r.replace(`{${i}}`, String(x)), s);
   const lengua = document.documentElement.lang || undefined;
@@ -56,6 +57,7 @@
   function pintar() {
     if (!datos) { return; }
     ocultarGlobo(); // el punto que lo abrió va a desaparecer y su focusout no siempre llega
+    anchoPintado = Math.round(grafica.clientWidth);
     const conFoco = grafica.contains(document.activeElement);
     const { commits, autores } = datos;
     grafica.replaceChildren();
@@ -230,15 +232,12 @@
   });
   grafica.addEventListener('focusout', ocultarGlobo);
 
-  // solo el ancho cambia la escala; el alto cambia al pintar y redibujar cortaría la animación de entrada
+  // solo el ancho cambia la escala (el alto cambia al pintar, y redibujar cortaría la animación de entrada); un
+  // panel abierto oculto mide 0 y se pinta cuando por fin tiene ancho
   let espera;
-  let anchoVisto = 0;
-  new ResizeObserver(([e]) => {
-    const w = Math.round(e.contentRect.width);
-    const primera = !anchoVisto; // la medida inicial no es un cambio: el primer pintado lo hace la llegada de datos
-    if (w === anchoVisto) { return; }
-    anchoVisto = w;
-    if (primera) { return; }
+  new ResizeObserver(() => {
+    const w = Math.round(grafica.clientWidth);
+    if (!w || !datos || w === anchoPintado) { return; }
     clearTimeout(espera);
     espera = setTimeout(pintar, 80);
   }).observe(grafica);

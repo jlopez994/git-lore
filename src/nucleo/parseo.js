@@ -140,9 +140,10 @@ function parsearWorktrees(texto) {
       if (clave === 'HEAD') { w.head = valor; }
       if (clave === 'branch') { w.rama = valor.replace(/^refs\/heads\//, ''); }
       if (clave === 'bare') { w.bare = true; }
+      if (clave === 'prunable') { w.huerfano = true; } // su carpeta ya no existe
     }
     return w;
-  }).filter(w => w.ruta && !w.bare);
+  }).filter(w => w.ruta && !w.bare && !w.huerfano);
 }
 
 module.exports = {

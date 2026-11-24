@@ -228,6 +228,6 @@ test('stash: parseo de stash list y colocación sobre su base', () => {
   assert.deepStrictEqual(lista[1].padres, ['a']);
   assert.ok(lista[1].stash && !colocados.has('s3'));
 
-  const wts = parsearWorktrees('worktree /r\nHEAD 111\nbranch refs/heads/main\n\nworktree /r-wt\nHEAD 222\ndetached\n\nworktree /bare\nbare\n');
+  const wts = parsearWorktrees('worktree /r\nHEAD 111\nbranch refs/heads/main\n\nworktree /r-wt\nHEAD 222\ndetached\n\nworktree /bare\nbare\n\nworktree /borrado\nHEAD 333\nprunable gitdir file points to non-existent location\n');
   assert.deepStrictEqual(wts, [{ ruta: '/r', head: '111', rama: 'main' }, { ruta: '/r-wt', head: '222' }]);
 });
