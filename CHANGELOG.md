@@ -6,6 +6,9 @@
   History view) draws every commit to a file as a dot on a timeline, one row per author, sized by the lines it changed,
   with the added and deleted lines below. Hover a dot for the commit, click it for its diff, or move between commits
   with the arrow keys. Hover an author to highlight their commits.
+- Commit graph: livelier colors, with its own vivid palette (a darker one for light themes; high contrast keeps the
+  theme's), and branch badges in the color of their lane: local branches filled, remote ones tinted, tags neutral, each
+  with an icon.
 
 ## 0.4.1
 

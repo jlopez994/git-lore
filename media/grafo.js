@@ -86,8 +86,21 @@
     e.dataset.vscodeContext = JSON.stringify({ ...datos, panel: window.PANEL, preventDefaultContextMenuItems: true });
   }
 
-  function insignia(ref, sha) {
-    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
+  const ICONOS = {
+    rama: 'M5 3.5v9M5 10.5c0-3 6-2 6-5.5M5 3.5a1.5 1.5 0 1 0 0-.01M11 4.5a1.5 1.5 0 1 0 0-.01M5 13.5a1.5 1.5 0 1 0 0-.01',
+    remota: 'M4.5 12.5h7a3 3 0 0 0 .3-6 4 4 0 0 0-7.6 1.2 2.4 2.4 0 0 0 .3 4.8z',
+    tag: 'M2.5 2.5h5l6 6-5 5-6-6zM5.5 5.5h.01',
+  };
+
+  function insignia(ref, sha, col) {
+    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo} l${col % COLORES}`);
+    const icono = document.createElementNS(NS, 'svg');
+    icono.setAttribute('viewBox', '0 0 16 16');
+    icono.setAttribute('aria-hidden', 'true');
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', ICONOS[ref.tipo]);
+    icono.appendChild(p);
+    e.append(icono, el('span', 'txt', ref.nombre));
     e.title = ref.nombre; // el chip se corta con «…» si el nombre es muy largo
     contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
     return e;
@@ -101,7 +114,7 @@
     r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
-    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha)));
+    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha, f.col)));
     const resumen = el('span', 'resumen', f.resumen);
     // el mensaje se corta con «…»: entero al pasar el ratón, con lo justo para ubicar el commit
     resumen.title = f.pendiente ? f.resumen : `${f.resumen}\n${f.sha.slice(0, 7)} · ${f.autor} · ${f.fechaCompleta}`;

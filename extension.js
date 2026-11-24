@@ -55,10 +55,10 @@ function activate(context) {
     })),
   );
   blame.registrar(context, log);
-  historial.registrar(context, log);
+  const ficheroDelHistorial = historial.registrar(context, log);
   comparar.registrar(context, protegido);
   grafo.registrar(context, protegido);
-  historia.registrar(context, protegido);
+  historia.registrar(context, protegido, ficheroDelHistorial);
 }
 
 function deactivate() { }

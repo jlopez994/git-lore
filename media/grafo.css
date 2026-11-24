@@ -1,17 +1,28 @@
 :root {
   --alto: 28px;
-  --c0: var(--vscode-charts-blue, #3794ff);
-  --c1: var(--vscode-charts-orange, #d18616);
-  --c2: var(--vscode-charts-green, #89d185);
-  --c3: var(--vscode-charts-purple, #b180d7);
-  --c4: var(--vscode-charts-red, #f14c4c);
-  --c5: var(--vscode-charts-yellow, #cca700);
-  --c6: var(--vscode-terminal-ansiCyan, #29b8db);
-  --c7: var(--vscode-terminal-ansiMagenta, #d670d6);
+  /* paleta propia y viva, como la de Git Graph: los colores de gráficas del tema quedan apagados. Orden pasado
+     por el validador de paleta (daltonismo entre carriles vecinos); claro y alto contraste tienen la suya */
+  --c0: #2f9bff;
+  --c1: #ff8a1f;
+  --c2: #c06cff;
+  --c3: #2fd36b;
+  --c4: #ff4f6d;
+  --c5: #1fd1d1;
+  --c6: #f5c400;
+  --c7: #ff5fd2;
   --borde: var(--vscode-widget-border, rgba(128, 128, 128, .25));
   --suave: var(--vscode-descriptionForeground);
   --salida: cubic-bezier(.22, 1, .36, 1);
   --muelle: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+body.vscode-light {
+  --c0: #0a6fd6; --c1: #d96800; --c2: #9a3fe0; --c3: #0e8a43;
+  --c4: #ef4a5a; --c5: #0a9e9e; --c6: #b38f00; --c7: #d93aa8;
+}
+body.vscode-high-contrast, body.vscode-high-contrast-light {
+  --c0: var(--vscode-charts-blue); --c1: var(--vscode-charts-orange); --c2: var(--vscode-charts-purple); --c3: var(--vscode-charts-green);
+  --c4: var(--vscode-charts-red); --c5: var(--vscode-terminal-ansiCyan); --c6: var(--vscode-charts-yellow); --c7: var(--vscode-terminal-ansiMagenta);
 }
 
 * { box-sizing: border-box; }
@@ -175,20 +186,30 @@ body {
   /* px enteros a propósito: con un line-height relativo o con decimales, Segoe UI deja el texto pegado al
      borde de abajo, y un chip que crezca con la letra se saldría de la fila de 28px. El zoom de VS Code
      escala el webview entero, así que el chip crece con él */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: 18px;
-  padding: 0 7px;
+  padding: 0 7px 0 5px;
   overflow: hidden;
-  border: 1px solid currentColor;
+  border: 1px solid transparent;
   border-radius: 9px;
   font-size: 11px;
   line-height: 16px;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ref.head { color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); border-color: transparent; font-weight: 600; }
-.ref.rama { color: var(--c0); }
-.ref.remota { color: var(--suave); }
-.ref.tag { color: var(--c5); border-style: dashed; }
+.ref .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ref svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* el chip lleva el color del carril de su commit: se ve de un vistazo qué rama es cada línea */
+.l0 { --color: var(--c0); } .l1 { --color: var(--c1); } .l2 { --color: var(--c2); } .l3 { --color: var(--c3); }
+.l4 { --color: var(--c4); } .l5 { --color: var(--c5); } .l6 { --color: var(--c6); } .l7 { --color: var(--c7); }
+.ref.rama, .ref.head { color: #fff; background: color-mix(in srgb, var(--color) 72%, #000); }
+.ref.head { font-weight: 600; box-shadow: 0 0 0 1px var(--vscode-editor-background), 0 0 0 2px var(--color); }
+.ref.remota { color: var(--vscode-foreground); background: color-mix(in srgb, var(--color) 16%, transparent); border-color: color-mix(in srgb, var(--color) 65%, transparent); }
+.ref.remota svg { stroke: var(--color); }
+.ref.remota { flex-shrink: 3; } /* con poco sitio cede antes la remota que la rama local */
+.ref.tag { color: var(--vscode-foreground); background: color-mix(in srgb, var(--vscode-foreground) 10%, transparent); }
+.ref.tag svg { stroke: var(--c6); }
 
 .sha {
   position: relative;

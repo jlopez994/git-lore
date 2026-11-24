@@ -230,8 +230,18 @@
   });
   grafica.addEventListener('focusout', ocultarGlobo);
 
+  // solo el ancho cambia la escala; el alto cambia al pintar y redibujar cortaría la animación de entrada
   let espera;
-  new ResizeObserver(() => { clearTimeout(espera); espera = setTimeout(pintar, 80); }).observe(grafica);
+  let anchoVisto = 0;
+  new ResizeObserver(([e]) => {
+    const w = Math.round(e.contentRect.width);
+    const primera = !anchoVisto; // la medida inicial no es un cambio: el primer pintado lo hace la llegada de datos
+    if (w === anchoVisto) { return; }
+    anchoVisto = w;
+    if (primera) { return; }
+    clearTimeout(espera);
+    espera = setTimeout(pintar, 80);
+  }).observe(grafica);
 
   window.addEventListener('message', ({ data: m }) => {
     if (m.tipo === 'error') {

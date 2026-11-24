@@ -38,6 +38,20 @@ function html(webview, raizExt, nonce) {
 </html>`;
 }
 
+// un merge sale de --follow sin name-status: su ruta es la del commit anterior que tocó el fichero, no la actual
+// (si se renombró después, «sha:rutaActual» no existiría en esa revisión)
+function cambiosDe(commits, rutaActual) {
+  const cambios = new Map();
+  let ruta = null;
+  for (let i = commits.length - 1; i >= 0; i--) {
+    const c = commits[i];
+    const f = c.ficheros[0] || { ruta: ruta || rutaActual, estado: 'M' };
+    ruta = f.ruta;
+    cambios.set(c.sha, { sha: c.sha, ruta: f.ruta, rutaAnterior: f.rutaAnterior, estado: f.estado, refAnterior: c.padres.length ? undefined : null });
+  }
+  return cambios;
+}
+
 async function datos(repo, uri) {
   const [commits, lineas] = await Promise.all([git.historial(repo, uri, { limite: LIMITE }), git.lineasDeFichero(repo, uri, LIMITE)]);
   const { autores, filaDe } = agruparAutores(commits);
@@ -52,10 +66,7 @@ async function datos(repo, uri) {
       };
     }),
     // lo que hace falta para abrir el diff se queda aquí: el webview solo manda el sha
-    cambios: new Map(commits.map(c => {
-      const f = c.ficheros[0] || { ruta: git.rutaRelativa(repo, uri) };
-      return [c.sha, { sha: c.sha, ruta: f.ruta, rutaAnterior: f.rutaAnterior, estado: f.estado, refAnterior: c.padres.length ? undefined : null }];
-    })),
+    cambios: cambiosDe(commits, git.rutaRelativa(repo, uri)),
   };
 }
 
@@ -75,15 +86,18 @@ function abrir(context, repo, uri) {
   panel.iconPath = new vscode.ThemeIcon('graph-scatter');
   let cambios = new Map();
   let cerrado = false;
+  let generacion = 0; // al reabrir puede haber dos cargas en vuelo: gana la última pedida
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
 
   async function cargar() {
+    const mia = ++generacion;
     try {
       const d = await datos(repo, uri);
+      if (mia !== generacion) { return; }
       cambios = d.cambios;
       enviar({ tipo: 'datos', fichero: git.rutaRelativa(repo, uri), autores: d.autores, commits: d.commits, limitado: d.limitado });
     } catch (e) {
-      enviar({ tipo: 'error', mensaje: e.message });
+      if (mia === generacion) { enviar({ tipo: 'error', mensaje: e.message }); }
     }
   }
 
@@ -104,10 +118,12 @@ function abrir(context, repo, uri) {
   panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'));
 }
 
-function registrar(context, protegido) {
+// sin argumento (icono de la vista File History, paleta) va el fichero que enseña esa vista, que no tiene por qué
+// ser el del editor activo
+function registrar(context, protegido, ficheroDelHistorial) {
   context.subscriptions.push(vscode.commands.registerCommand('gitLore.visualFileHistory', arg => protegido(async () => {
     const editor = vscode.window.activeTextEditor;
-    const uri = arg instanceof vscode.Uri ? arg : editor && editor.document.uri;
+    const uri = arg instanceof vscode.Uri ? arg : ficheroDelHistorial() || (editor && editor.document.uri);
     const repo = await git.repoDe(uri);
     if (!repo) { return vscode.window.showWarningMessage(t('Open a file in a git repository first')); }
     abrir(context, repo, uri);
