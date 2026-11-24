@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.1
+
+- Commit graph: dimming the commits outside the history of your HEAD is now off by default and remembered, with the
+  new setting `gitLore.graph.highlightCurrentBranch`. The target button in the toolbar still toggles it, and changes
+  the setting.
+- Commit graph: the target button, when on, looks like VS Code's own toggles (the ones in the search box) instead of
+  a gray square.
+
 ## 0.8.0
 
 - Contributors chart: the chart icon in the Contributors view (or `Show Contributors Chart`) opens a bubble per

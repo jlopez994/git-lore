@@ -33,7 +33,7 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
     ones tinted, tags neutral). Hover a message, author or badge for the full text. A row above HEAD shows your
     uncommitted changes. Choose all branches, local branches or the current branch, filter by message, author, ref or
     SHA, and scroll to load more. Drag the graph's edge to make it wider (double-click to reset).
-    With many branches, commits outside the history of your HEAD are dimmed (toggle it from the toolbar) and a floating
+    With many branches, the target button in the toolbar dims the commits outside the history of your HEAD and a floating
     button takes you back to your commit when it is out of view.
   - *Commit details:* click a commit (or press Enter; arrows move between rows) to open its message, author, parents and
     changed files inline. Each file opens its diff; right-click it to open it at that revision, compare it with the
@@ -60,6 +60,7 @@ Everything is localized in English and Spanish.
 | Setting | Default | |
 |---|---|---|
 | `gitLore.currentLine.enabled` | `true` | Show the blame of the current line. Also `Git Lore: Toggle Current Line Blame`. |
+| `gitLore.graph.highlightCurrentBranch` | `false` | In the commit graph, dim the commits that are not in the history of your HEAD. Also the target button in the graph toolbar. |
 
 The colors are themeable: `gitLore.currentLineForeground`, `gitLore.fileBlameForeground`, `gitLore.fileBlameBackground`.
 

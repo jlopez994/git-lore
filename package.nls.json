@@ -44,5 +44,6 @@
   "command.previousRevision": "Open Previous Revision",
   "command.nextRevision": "Open Next Revision",
   "view.contributors": "Contributors",
-  "command.contributorsChart": "Show Contributors Chart"
+  "command.contributorsChart": "Show Contributors Chart",
+  "config.graphHighlight": "Commit Graph: dim the commits that are not in the history of the current branch. The target button in the graph toolbar toggles it."
 }

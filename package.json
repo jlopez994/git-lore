@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -729,6 +729,11 @@
           "type": "boolean",
           "default": true,
           "description": "%config.currentLine%"
+        },
+        "gitLore.graph.highlightCurrentBranch": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.graphHighlight%"
         }
       }
     }
