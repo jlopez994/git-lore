@@ -10,6 +10,8 @@
 - Commit graph: narrower lanes, and the graph takes at most a fifth of the panel (wider repos fade out at the edge).
   Drag its edge to resize it, or double-click it to go back to automatic.
 - Fix: local branches with a `/` in their name (`feat/x`) were drawn as remote branches.
+- Fix: going back to the commit graph after opening a diff keeps the scroll position, filter and open commit instead of
+  reloading.
 - Fix: the graph width shrinks again after switching to fewer branches or reloading.
 
 ## 0.3.0

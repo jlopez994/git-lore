@@ -92,6 +92,8 @@ function abrir(context, repo) {
   const panel = vscode.window.createWebviewPanel('gitLore.graph', `${t('Commit Graph')}: ${path.basename(raiz)}`,
     vscode.ViewColumn.Active, {
       enableScripts: true,
+      // como Git Graph: al volver de un diff siguen el scroll, el filtro y el commit abierto (cuesta algo de memoria)
+      retainContextWhenHidden: true,
       localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'media')],
     });
   panel.iconPath = new vscode.ThemeIcon('git-merge');
@@ -103,7 +105,7 @@ function abrir(context, repo) {
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
   const id = crypto.randomUUID();
-  let alcance = 'todas'; // aquí y no en el webview: sin retainContextWhenHidden se reinicia al ocultarlo
+  let alcance = 'todas'; // aquí y no en el webview: si VS Code recrea el webview, se envía con las filas
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
   const textoPendientes = n => t('Uncommitted changes ({0})', n);
 
