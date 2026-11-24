@@ -147,13 +147,16 @@ function parsearWorktrees(texto) {
 }
 
 // git shortlog -sne → autores por correo (la misma persona con dos nombres cuenta una vez, con el que más usa)
+// una persona es su correo, aunque firme con varios nombres; sin correo, su nombre
+const claveDePersona = (correo, nombre) => (correo || nombre || '').toLowerCase();
+
 function parsearShortlog(texto) {
   const porCorreo = new Map();
   for (const l of texto.split('\n')) {
     const m = /^\s*(\d+)\t(.*?)\s*<([^>]*)>\s*$/.exec(l);
     if (!m) { continue; }
     const [, n, nombre, correo] = m;
-    const clave = correo.toLowerCase() || nombre;
+    const clave = claveDePersona(correo, nombre);
     const a = porCorreo.get(clave) || { nombre, correo, commits: 0, maxNombre: 0 };
     a.commits += Number(n);
     if (Number(n) > a.maxNombre) { a.nombre = nombre; a.maxNombre = Number(n); }
@@ -163,8 +166,29 @@ function parsearShortlog(texto) {
     .sort((a, b) => b.commits - a.commits || a.nombre.localeCompare(b.nombre));
 }
 
+// %aE/%aN aplican .mailmap como shortlog: si no, las cifras no cuadrarían con las de commits
+const FORMATO_AUTOR = `${SEP_REG}%aE${SEP_CAMPO}%aN`;
+
+// git log --numstat --format=FORMATO_AUTOR → Map(clave de persona → { mas, menos })
+function parsearLineasPorAutor(texto) {
+  const porClave = new Map();
+  for (const bloque of texto.split(SEP_REG)) {
+    const [cabecera, ...resto] = bloque.split('\n');
+    if (!cabecera.trim()) { continue; }
+    const [correo, nombre] = cabecera.split(SEP_CAMPO);
+    const clave = claveDePersona(correo, nombre);
+    const a = porClave.get(clave) || { mas: 0, menos: 0 };
+    for (const l of resto) {
+      const m = NUMSTAT.exec(l);
+      if (m && m[1] !== '-') { a.mas += Number(m[1]); a.menos += Number(m[2]); }
+    }
+    porClave.set(clave, a);
+  }
+  return porClave;
+}
+
 module.exports = {
-  parsearShortlog,
+  parsearShortlog, parsearLineasPorAutor, claveDePersona, FORMATO_AUTOR,
   desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees,
   FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 };

@@ -1,0 +1,128 @@
+:root {
+  --mas: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+  --menos: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+  --alto: 300px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  padding: 16px 16px 24px;
+  color: var(--vscode-foreground);
+  background: var(--fondo);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.cabecera { margin-bottom: 16px; }
+.cabecera h1 { margin: 0; overflow: hidden; font-size: 1.15em; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.resumen { margin: 4px 0 0; color: var(--suave); font-variant-numeric: tabular-nums; }
+.aviso { color: var(--suave); }
+.oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.reparto { display: grid; gap: 20px; }
+.reparto[aria-busy="true"] {
+  height: var(--alto);
+  border-radius: 6px;
+  background: linear-gradient(90deg, transparent 0, color-mix(in srgb, var(--vscode-foreground) 6%, transparent) 50%, transparent 100%) 0 0 / 200% 100%;
+  animation: brillo 1.4s linear infinite;
+}
+@keyframes brillo { to { background-position: -200% 0; } }
+
+.lienzo { height: var(--alto); min-width: 0; }
+.nube { display: block; overflow: visible; }
+/* relleno tenue con borde del color: el texto va con la tinta del tema y se lee en claro y en oscuro */
+.burbuja { cursor: default; transform-box: fill-box; transform-origin: center; }
+.burbuja circle {
+  --tinta: var(--suave);
+  fill: color-mix(in srgb, var(--tinta) 32%, var(--fondo));
+  stroke: var(--tinta);
+  stroke-width: 1.5;
+  transition: fill .15s ease-out, opacity .15s ease-out;
+}
+.burbuja.c0 circle { --tinta: var(--c0); } .burbuja.c1 circle { --tinta: var(--c1); } .burbuja.c2 circle { --tinta: var(--c2); }
+.burbuja.c3 circle { --tinta: var(--c3); } .burbuja.c4 circle { --tinta: var(--c4); } .burbuja.c5 circle { --tinta: var(--c5); }
+.burbuja.activo circle { fill: color-mix(in srgb, var(--tinta) 60%, var(--fondo)); stroke-width: 2.5; }
+.enfocando .burbuja:not(.activo) { opacity: .35; }
+.burbuja text { fill: var(--vscode-foreground); font-size: 12px; text-anchor: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
+.burbuja .nombre { font-weight: 600; }
+.burbuja .cuenta { fill: var(--suave); font-size: 11px; }
+.burbuja.activo .cuenta { fill: var(--vscode-foreground); }
+
+.globo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  gap: 2px;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 10px;
+  color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
+  background: var(--vscode-editorHoverWidget-background, var(--fondo));
+  border: 1px solid var(--vscode-editorHoverWidget-border, var(--borde));
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  animation: aparecer .12s var(--salida);
+}
+.globo strong { overflow-wrap: anywhere; }
+.globo .suave { color: var(--suave); overflow-wrap: anywhere; }
+@keyframes aparecer { from { opacity: 0; } }
+
+.lista { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.lista th { padding: 0 8px 6px; color: var(--suave); font-weight: 500; text-align: left; border-bottom: 1px solid var(--borde); }
+.lista td { padding: 6px 8px; vertical-align: middle; }
+.lista .num { width: 1%; text-align: right; white-space: nowrap; }
+.lista td.lineas { min-width: 8.5em; }
+.lista tbody tr { cursor: default; outline: none; transition: background .15s ease-out; }
+.lista tbody tr:hover, .lista tbody tr.activo { background: var(--vscode-list-hoverBackground); }
+.lista tbody tr:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+.lista td:first-child { border-radius: 4px 0 0 4px; }
+.lista td:last-child { border-radius: 0 4px 4px 0; }
+
+.autor { max-width: 0; }
+.nombre { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* con el nombre repetido, el correo es lo primero que se recorta */
+.nombre .texto { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.correo { flex: 0 100 auto; min-width: 0; overflow: hidden; color: var(--suave); text-overflow: ellipsis; white-space: nowrap; }
+.muestra { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--suave); }
+.c0 .muestra, .c0 .barra i { background: var(--c0); } .c1 .muestra, .c1 .barra i { background: var(--c1); }
+.c2 .muestra, .c2 .barra i { background: var(--c2); } .c3 .muestra, .c3 .barra i { background: var(--c3); }
+.c4 .muestra, .c4 .barra i { background: var(--c4); } .c5 .muestra, .c5 .barra i { background: var(--c5); }
+
+/* barra fina: compara con precisión lo que las burbujas solo enseñan a ojo */
+.barra { display: block; height: 3px; margin: 5px 0 0 18px; }
+.barra i {
+  display: block;
+  width: calc(var(--parte) * 100%);
+  min-width: 2px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--suave);
+  transform-origin: left;
+}
+.mas { color: var(--mas); }
+.menos { color: var(--menos); }
+
+/* primera vez: las burbujas brotan de mayor a menor y las barras crecen desde la izquierda */
+.animar .burbuja { animation: brotar .45s var(--muelle) var(--retardo) both; }
+.animar .barra i { animation: crecer .5s var(--salida) var(--retardo) both; }
+@keyframes brotar { from { transform: scale(0); opacity: 0; } }
+@keyframes crecer { from { transform: scaleX(0); } }
+
+@media (max-width: 560px) {
+  :root { --alto: 240px; }
+  body { padding: 12px 8px 16px; }
+}
+@media (max-width: 400px) {
+  .lista .lineas { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reparto[aria-busy="true"], .animar .burbuja, .animar .barra i, .globo { animation: none !important; }
+  .burbuja circle, .lista tbody tr { transition: none; }
+}

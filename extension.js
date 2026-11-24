@@ -9,6 +9,7 @@ const grafo = require('./src/grafo-vista');
 const historia = require('./src/historia-vista');
 const revisiones = require('./src/revisiones');
 const contribuidores = require('./src/contribuidores');
+const reparto = require('./src/reparto-vista');
 
 const t = vscode.l10n.t;
 let salida;
@@ -62,7 +63,7 @@ function activate(context) {
   grafo.registrar(context, protegido);
   historia.registrar(context, protegido, ficheroDelHistorial);
   revisiones.registrar(context, protegido);
-  contribuidores.registrar(context, log);
+  reparto.registrar(context, protegido, log, contribuidores.registrar(context, log));
 }
 
 function deactivate() { }

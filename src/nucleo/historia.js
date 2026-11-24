@@ -1,12 +1,15 @@
 'use strict';
-// Historial visual de un fichero: a qué fila (autor) va cada commit. Una persona es su correo, aunque cambie de nombre.
+// Historial visual de un fichero: a qué fila (autor) va cada commit.
+const { claveDePersona } = require('./parseo');
 
-// Colores en orden fijo por número de commits; a partir del máximo, todo cae en «otros» (sin color propio).
-// 7 filas: los 6 colores del tema que se distinguen entre sí con daltonismo, más «otros»
-function agruparAutores(commits, max = 7) {
+// los colores del tema que se distinguen entre sí con daltonismo (media/paleta.css); el resto va a «otros»
+const COLORES = 6;
+
+// Colores en orden fijo por número de commits; a partir del máximo, todo cae en «otros» (sin color propio)
+function agruparAutores(commits, max = COLORES + 1) {
   const porClave = new Map();
   for (const c of commits) {
-    const clave = (c.correo || c.autor || '').toLowerCase();
+    const clave = claveDePersona(c.correo, c.autor);
     const a = porClave.get(clave) || { clave, nombre: c.autor, commits: 0 };
     a.commits++;
     porClave.set(clave, a);
@@ -18,7 +21,7 @@ function agruparAutores(commits, max = 7) {
   if (resto.length) { autores.push({ nombre: null, commits: resto.reduce((n, a) => n + a.commits, 0), otros: resto.length, color: null }); }
   const fila = new Map(propios.map((a, i) => [a.clave, i]));
   const filaDe = c => {
-    const i = fila.get((c.correo || c.autor || '').toLowerCase());
+    const i = fila.get(claveDePersona(c.correo, c.autor));
     return i === undefined ? propios.length : i;
   };
   return { autores, filaDe };
@@ -38,4 +41,4 @@ function cambiosDe(commits, rutaActual) {
   return cambios;
 }
 
-module.exports = { agruparAutores, cambiosDe };
+module.exports = { agruparAutores, cambiosDe, COLORES };

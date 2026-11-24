@@ -101,6 +101,7 @@ function registrar(context, log) {
     vscode.window.onDidChangeActiveTextEditor(elegir),
     vscode.commands.registerCommand('gitLore.refreshContributors', () => proveedor.cambio.fire()),
   );
+  return () => proveedor.repo; // el gráfico de colaboradores abre el mismo repo que enseña la vista
 }
 
 module.exports = { registrar };
