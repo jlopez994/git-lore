@@ -30,6 +30,8 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   Right-click a file in the commit details to open its changes, open it at that revision, compare it with the working
   file, open the working file, copy its path or restore it to that revision. The download button in the
   graph toolbar fetches from all remotes. Deleting and `reset --hard` ask first.
+  Stashes appear as rows on the commit they were made on (apply, pop or drop them from their menu), and branches
+  checked out in other worktrees are marked, with an option to open that worktree in a new window.
 - **Compare.** `Compare Branches or Refs…` (the compare icon in the Source Control title) lists the files that differ between two branches, tags or commits (you can
   type any SHA), or between a ref and your working tree. Click a file for its diff; swap the sides from the view title.
 

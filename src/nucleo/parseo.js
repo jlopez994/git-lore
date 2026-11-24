@@ -120,4 +120,32 @@ function parsearNumstat(texto) {
   return lineas;
 }
 
-module.exports = { desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, FORMATO_LOG, FORMATO_SHA };
+// git stash list --format=FORMATO_STASH; %gd es el nombre (stash@{n}) y el primer padre, la base del stash
+const FORMATO_STASH = `${SEP_REG}%H${SEP_CAMPO}%P${SEP_CAMPO}%an${SEP_CAMPO}%ae${SEP_CAMPO}%at${SEP_CAMPO}%gd${SEP_CAMPO}%s`;
+function parsearStash(texto) {
+  return texto.split(SEP_REG).filter(r => r.trim()).map(r => {
+    const [sha, padres, autor, correo, fecha, nombre, resumen] = r.trim().split(SEP_CAMPO);
+    return { sha, base: padres.split(' ')[0], autor, correo, fecha: Number(fecha) * 1000, nombre, resumen: resumen || '' };
+  });
+}
+
+// git worktree list --porcelain: bloques separados por una línea en blanco
+function parsearWorktrees(texto) {
+  return texto.split(/\n\n+/).map(b => {
+    const w = {};
+    for (const l of b.split('\n')) {
+      const i = l.indexOf(' ');
+      const [clave, valor] = i < 0 ? [l, ''] : [l.slice(0, i), l.slice(i + 1)];
+      if (clave === 'worktree') { w.ruta = valor; }
+      if (clave === 'HEAD') { w.head = valor; }
+      if (clave === 'branch') { w.rama = valor.replace(/^refs\/heads\//, ''); }
+      if (clave === 'bare') { w.bare = true; }
+    }
+    return w;
+  }).filter(w => w.ruta && !w.bare);
+}
+
+module.exports = {
+  desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees,
+  FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+};

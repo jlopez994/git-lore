@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 const vscode = require('vscode');
 const git = require('./git');
-const { trazarGrafo } = require('./nucleo/grafo');
+const { trazarGrafo, intercalarStashes } = require('./nucleo/grafo');
 const { clasificarRef } = require('./nucleo/refs');
 const grafoAcciones = require('./grafo-acciones');
 const grafoFicheros = require('./grafo-ficheros');
@@ -24,7 +24,7 @@ function html(webview, raizExt, nonce, id) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
     copiado: t('Copied'), sinCommits: t('No commits'), copiar: t('Copy SHA'), ficheros: t('Files'), padres: t('Parents'),
-    verCambios: t('Show in Source Control'),
+    verCambios: t('Show in Source Control'), enWorktree: t('Checked out in worktree {0}'),
   };
   return `<!doctype html>
 <html lang="${vscode.env.language}">
@@ -96,6 +96,8 @@ function abrir(context, repo) {
   let carriles = [];
   let cargandoMas = false;
   let recargando = false;
+  let stashSinColocar = []; // stash cuya base aún no ha salido en ninguna página
+  let otrosWorktrees = [];
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
   const id = crypto.randomUUID();
@@ -113,17 +115,34 @@ function abrir(context, repo) {
     const limite = mantener ? Math.min(MAX_RECARGA, Math.max(PAGINA, saltar)) : PAGINA;
     cargandoMas = !reiniciar;
     try {
-      const commits = await git.grafo(repo, { saltar: desde, limite, alcance });
+      // stash y worktrees se leen al recargar; las páginas siguientes tiran de lo leído
+      if (reiniciar) {
+        const [st, wts] = await Promise.all([git.stashes(repo).catch(() => []), git.worktrees(repo).catch(() => [])]);
+        if (mia !== generacion || cerrado) { return; }
+        stashSinColocar = st;
+        otrosWorktrees = wts;
+      }
+      const extra = otrosWorktrees.filter(w => !w.rama).map(w => w.head); // un HEAD separado no sale con --branches
+      const commits = await git.grafo(repo, { saltar: desde, limite, alcance, extra });
       if (mia !== generacion || cerrado) { return; }
+      const { lista, colocados } = intercalarStashes(commits, stashSinColocar);
+      stashSinColocar = stashSinColocar.filter(s => !colocados.has(s.sha));
       const head = repo.state.HEAD && repo.state.HEAD.commit;
       const n = reiniciar && head ? pendientes(repo) : 0;
-      const falso = n ? [{ sha: PENDIENTES, padres: [head] }] : [];
-      const traza = trazarGrafo([...falso, ...commits], reiniciar ? [] : carriles);
+      const todos = [...(n ? [{ sha: PENDIENTES, padres: [head] }] : []), ...lista];
+      const traza = trazarGrafo(todos, reiniciar ? [] : carriles);
       carriles = traza.carriles;
       saltar = desde + commits.length;
+      const porRama = new Map(otrosWorktrees.filter(w => w.rama).map(w => [w.rama, w.ruta]));
+      const sueltos = otrosWorktrees.filter(w => !w.rama);
       const filas = traza.filas.map((f, i) => {
-        const c = commits[i - falso.length];
-        if (!c) { return { ...f, pendiente: true, resumen: textoPendientes(n), autor: '', fecha: '', fechaCompleta: '', refs: [] }; }
+        const c = todos[i];
+        if (c.sha === PENDIENTES) { return { ...f, pendiente: true, resumen: textoPendientes(n), autor: '', fecha: '', fechaCompleta: '', refs: [] }; }
+        const refs = c.stash ? [{ nombre: c.nombre, tipo: 'stash', esHead: false }] : [
+          ...c.refs.map(clasificarRef).filter(Boolean)
+            .map(r => (r.tipo === 'rama' && porRama.has(r.nombre) ? { ...r, worktree: porRama.get(r.nombre) } : r)),
+          ...sueltos.filter(w => w.head === c.sha).map(w => ({ nombre: path.basename(w.ruta), tipo: 'worktree', esHead: false, worktree: w.ruta })),
+        ];
         return {
           ...f,
           resumen: c.resumen,
@@ -131,8 +150,9 @@ function abrir(context, repo) {
           correo: c.correo,
           fecha: relativa(c.fecha),
           fechaCompleta: new Date(c.fecha).toLocaleString(vscode.env.language),
-          refs: c.refs.map(clasificarRef).filter(Boolean),
-          head: c.sha === head,
+          refs,
+          stash: !!c.stash,
+          head: !c.stash && c.sha === head,
         };
       });
       enviar({ tipo: 'filas', filas, reiniciar, alcance, hayMas: commits.length === limite });

@@ -104,6 +104,23 @@ const ACCIONES = {
     }
   },
 
+  applyStash: (repo, arg) => git.usarStash(repo, shaDe(arg), 'apply'),
+  popStash: (repo, arg) => git.usarStash(repo, shaDe(arg), 'pop'),
+
+  async dropStash(repo, arg) {
+    const sha = shaDe(arg);
+    if (!await confirmar(t('Drop this stash?'), t('Its changes can only be recovered by hand from git fsck.'), t('Drop'))) { return false; }
+    return git.usarStash(repo, sha, 'drop');
+  },
+
+  // solo rutas que git da como worktree de este repo: el webview podría mandar cualquier cosa
+  async openWorktree(repo, arg) {
+    const w = (await git.worktrees(repo)).find(x => x.ruta === arg.worktree);
+    if (!w) { throw new Error(t('That worktree no longer exists')); }
+    await vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(w.ruta), { forceNewWindow: true });
+    return false; // no cambia nada de este repo
+  },
+
   async deleteTag(repo, arg) {
     const { ref } = await refDe(repo, arg, ['tag']);
     if (!await confirmar(t('Delete tag {0}?', ref), t('Only the local tag is deleted.'), t('Delete'))) { return false; }

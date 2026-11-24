@@ -11,6 +11,11 @@
   with an icon.
 - Commit graph: more room for the message. The graph takes at most 15% of the panel by default (drag its edge for
   more), and the author, date and SHA columns are narrower.
+- Commit graph: stashes show up as rows hanging from the commit they were made on, with a hollow node. Click one for
+  its files; right-click to apply, pop or drop it.
+- Commit graph: worktrees. Branches checked out in another worktree carry a folder icon (hover it for the path), a
+  detached worktree gets its own badge and its commit is always drawn, and right-click opens the worktree in a new
+  window. Checkout and delete are hidden for those branches, since git refuses them.
 
 ## 0.4.1
 

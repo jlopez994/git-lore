@@ -161,16 +161,18 @@ body {
 .fila:hover .nodo { r: 6; }
 .nodo.pendiente { fill: var(--vscode-editor-background); stroke-width: 2; stroke-dasharray: 3 2; }
 .nodo.pendiente.c0 { stroke: var(--c0); }
+/* un stash no es un commit de ninguna rama: nodo hueco, como los cambios sin commit */
+.grafo .nodo.stash { fill: var(--vscode-editor-background); stroke: var(--tinta); stroke-width: 2; stroke-dasharray: 2 2; }
 .fila.pendiente .resumen { color: var(--suave); font-style: italic; }
 
-.c0 { stroke: var(--c0); } .nodo.c0 { fill: var(--c0); }
-.c1 { stroke: var(--c1); } .nodo.c1 { fill: var(--c1); }
-.c2 { stroke: var(--c2); } .nodo.c2 { fill: var(--c2); }
-.c3 { stroke: var(--c3); } .nodo.c3 { fill: var(--c3); }
-.c4 { stroke: var(--c4); } .nodo.c4 { fill: var(--c4); }
-.c5 { stroke: var(--c5); } .nodo.c5 { fill: var(--c5); }
-.c6 { stroke: var(--c6); } .nodo.c6 { fill: var(--c6); }
-.c7 { stroke: var(--c7); } .nodo.c7 { fill: var(--c7); }
+.c0 { stroke: var(--c0); --tinta: var(--c0); } .nodo.c0 { fill: var(--c0); }
+.c1 { stroke: var(--c1); --tinta: var(--c1); } .nodo.c1 { fill: var(--c1); }
+.c2 { stroke: var(--c2); --tinta: var(--c2); } .nodo.c2 { fill: var(--c2); }
+.c3 { stroke: var(--c3); --tinta: var(--c3); } .nodo.c3 { fill: var(--c3); }
+.c4 { stroke: var(--c4); --tinta: var(--c4); } .nodo.c4 { fill: var(--c4); }
+.c5 { stroke: var(--c5); --tinta: var(--c5); } .nodo.c5 { fill: var(--c5); }
+.c6 { stroke: var(--c6); --tinta: var(--c6); } .nodo.c6 { fill: var(--c6); }
+.c7 { stroke: var(--c7); --tinta: var(--c7); } .nodo.c7 { fill: var(--c7); }
 .nodo.head { stroke: var(--vscode-foreground); }
 
 .texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
@@ -210,6 +212,11 @@ body {
 .ref.remota { flex-shrink: 3; } /* con poco sitio cede antes la remota que la rama local */
 .ref.tag { color: var(--vscode-foreground); background: color-mix(in srgb, var(--vscode-foreground) 10%, transparent); }
 .ref.tag svg { stroke: var(--c6); }
+.ref.stash { color: var(--vscode-foreground); background: color-mix(in srgb, var(--color) 16%, transparent); border: 1px dashed var(--color); }
+.ref.stash svg, .ref.worktree svg { stroke: var(--color); }
+.ref.worktree { color: var(--vscode-foreground); border-color: var(--color); }
+.fila.stash .resumen { font-style: italic; color: var(--suave); }
+.seleccionada.stash .resumen { color: inherit; }
 
 .sha {
   position: relative;

@@ -206,3 +206,28 @@ test('historia: autores por correo, ordenados y con «otros» a partir del máxi
   assert.deepStrictEqual(cuatro.map(a => a.color), [0, 1, 2, null]);
   assert.ok(cuatro.every(a => a.color === null || a.color < 3));
 });
+
+test('stash: parseo de stash list y colocación sobre su base', () => {
+  const { parsearStash, parsearWorktrees, FORMATO_STASH } = require('../src/nucleo/parseo');
+  const { intercalarStashes } = require('../src/nucleo/grafo');
+  escribir('b con espacio.txt', 'cambio sin commit\n');
+  git('-c', 'user.name=Ana', '-c', 'user.email=a@example.com', 'stash', 'push', '-q', '-m', 'a medias');
+  const [s] = parsearStash(git('stash', 'list', `--format=${FORMATO_STASH}`));
+  assert.strictEqual(s.nombre, 'stash@{0}');
+  assert.match(s.resumen, /a medias/);
+  assert.strictEqual(s.base, git('rev-parse', 'HEAD').trim());
+  git('stash', 'drop', '-q');
+
+  const c = (sha, fecha) => ({ sha, fecha, padres: [] });
+  const commits = [c('h', 50), c('b', 30), c('a', 10)];
+  const nuevo = { sha: 's1', base: 'a', fecha: 40 }; // más nuevo que b: va antes de b aunque su base sea a
+  const viejo = { sha: 's2', base: 'b', fecha: 5 }; // más viejo que todo: como muy tarde encima de su base
+  const fuera = { sha: 's3', base: 'zz', fecha: 60 }; // base en otra página: no se coloca todavía
+  const { lista, colocados } = intercalarStashes(commits, [viejo, nuevo, fuera]);
+  assert.deepStrictEqual(lista.map(x => x.sha), ['h', 's1', 's2', 'b', 'a']);
+  assert.deepStrictEqual(lista[1].padres, ['a']);
+  assert.ok(lista[1].stash && !colocados.has('s3'));
+
+  const wts = parsearWorktrees('worktree /r\nHEAD 111\nbranch refs/heads/main\n\nworktree /r-wt\nHEAD 222\ndetached\n\nworktree /bare\nbare\n');
+  assert.deepStrictEqual(wts, [{ ruta: '/r', head: '111', rama: 'main' }, { ruta: '/r-wt', head: '222' }]);
+});

@@ -222,6 +222,26 @@
         "title": "%command.visualFileHistory%",
         "category": "Git Lore",
         "icon": "$(graph-scatter)"
+      },
+      {
+        "command": "gitLore.graph.applyStash",
+        "title": "%command.graph.applyStash%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.popStash",
+        "title": "%command.graph.popStash%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.dropStash",
+        "title": "%command.graph.dropStash%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.openWorktree",
+        "title": "%command.graph.openWorktree%",
+        "category": "Git Lore"
       }
     ],
     "menus": {
@@ -329,6 +349,22 @@
         {
           "command": "gitLore.visualFileHistory",
           "when": "resourceScheme == file"
+        },
+        {
+          "command": "gitLore.graph.applyStash",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.popStash",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.dropStash",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.openWorktree",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -468,7 +504,7 @@
         },
         {
           "command": "gitLore.graph.checkout",
-          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead && !worktree",
           "group": "1_rama@1"
         },
         {
@@ -478,7 +514,7 @@
         },
         {
           "command": "gitLore.graph.deleteBranch",
-          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead && !worktree",
           "group": "9_borrar@1"
         },
         {
@@ -503,7 +539,7 @@
         },
         {
           "command": "gitLore.graph.copySha",
-          "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(commit|rama|remota|tag)$/",
+          "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(commit|rama|remota|tag|stash|worktree)$/",
           "group": "8_copiar@1"
         },
         {
@@ -540,6 +576,26 @@
           "command": "gitLore.graph.restoreFile",
           "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D && estadoFichero != R",
           "group": "9_restaurar@1"
+        },
+        {
+          "command": "gitLore.graph.applyStash",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == stash",
+          "group": "1_stash@1"
+        },
+        {
+          "command": "gitLore.graph.popStash",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == stash",
+          "group": "1_stash@2"
+        },
+        {
+          "command": "gitLore.graph.dropStash",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == stash",
+          "group": "9_borrar@1"
+        },
+        {
+          "command": "gitLore.graph.openWorktree",
+          "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(rama|worktree)$/ && worktree",
+          "group": "1_rama@0"
         }
       ]
     },

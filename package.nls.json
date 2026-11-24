@@ -36,5 +36,9 @@
   "command.graph.copyPath": "Copy Path",
   "command.graph.copyRelativePath": "Copy Relative Path",
   "command.graph.restoreFile": "Restore File to This Revision…",
-  "command.visualFileHistory": "Show Visual File History"
+  "command.visualFileHistory": "Show Visual File History",
+  "command.graph.applyStash": "Apply Stash",
+  "command.graph.popStash": "Pop Stash",
+  "command.graph.dropStash": "Drop Stash…",
+  "command.graph.openWorktree": "Open Worktree in New Window"
 }
