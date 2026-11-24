@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.0
+
+- Visual File History: `Show Visual File History` (editor and tab context menus, Explorer, or the icon in the File
+  History view) draws every commit to a file as a dot on a timeline, one row per author, sized by the lines it changed,
+  with the added and deleted lines below. Hover a dot for the commit, click it for its diff, or move between commits
+  with the arrow keys. Hover an author to highlight their commits.
+- Commit graph: livelier colors, with its own vivid palette (a darker one for light themes; high contrast keeps the
+  theme's), and branch badges in the color of their lane: local branches filled, remote ones tinted, tags neutral, each
+  with an icon.
+- Commit graph: more room for the message. The graph takes at most 15% of the panel by default (drag its edge for
+  more), and the author, date and SHA columns are narrower.
+- Commit graph: stashes show up as rows hanging from the commit they were made on, with a hollow node. Click one for
+  its files; right-click to apply, pop or drop it.
+- Commit graph: worktrees. Branches checked out in another worktree carry a folder icon (hover it for the path), a
+  detached worktree gets its own badge and its commit is always drawn, and right-click opens the worktree in a new
+  window. Checkout and delete are hidden for those branches, since git refuses them.
+
 ## 0.4.1
 
 - Branch and tag badges show long names in full (up to 24em) and shrink only when the row is crowded; hover one for its

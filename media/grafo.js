@@ -63,7 +63,7 @@
     nodo.setAttribute('cx', String(x(f.col)));
     nodo.setAttribute('cy', String(ALTO / 2));
     nodo.setAttribute('r', f.head ? '5' : '4');
-    nodo.setAttribute('class', `nodo c${f.col % COLORES}${f.head ? ' head' : ''}${f.pendiente ? ' pendiente' : ''}`);
+    nodo.setAttribute('class', `nodo c${f.col % COLORES}${f.head ? ' head' : ''}${f.pendiente ? ' pendiente' : ''}${f.stash ? ' stash' : ''}`);
     g.appendChild(nodo);
     return g;
   }
@@ -86,10 +86,32 @@
     e.dataset.vscodeContext = JSON.stringify({ ...datos, panel: window.PANEL, preventDefaultContextMenuItems: true });
   }
 
-  function insignia(ref, sha) {
-    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
-    e.title = ref.nombre; // el chip se corta con «…» si el nombre es muy largo
-    contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
+  const ICONOS = {
+    rama: 'M5 3.5v9M5 10.5c0-3 6-2 6-5.5M5 3.5a1.5 1.5 0 1 0 0-.01M11 4.5a1.5 1.5 0 1 0 0-.01M5 13.5a1.5 1.5 0 1 0 0-.01',
+    remota: 'M4.5 12.5h7a3 3 0 0 0 .3-6 4 4 0 0 0-7.6 1.2 2.4 2.4 0 0 0 .3 4.8z',
+    tag: 'M2.5 2.5h5l6 6-5 5-6-6zM5.5 5.5h.01',
+    stash: 'M2.5 5.5h11v7h-11zM4 3h8M5.5 8.5h5',
+    worktree: 'M1.5 4.5h4.5l1.5 1.5h7v6.5h-13z',
+  };
+
+  function icono(tipo) {
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 16 16');
+    s.setAttribute('aria-hidden', 'true');
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', ICONOS[tipo]);
+    s.appendChild(p);
+    return s;
+  }
+
+  function insignia(ref, sha, col) {
+    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo} l${col % COLORES}`);
+    e.append(icono(ref.tipo), el('span', 'txt', ref.nombre));
+    // una rama con checkout en otro worktree lleva la carpeta detrás; el title dice dónde
+    if (ref.worktree && ref.tipo === 'rama') { e.appendChild(icono('worktree')); }
+    // el chip se corta con «…» si el nombre es muy largo
+    e.title = ref.worktree ? `${ref.nombre}\n${T.enWorktree.replace('{0}', ref.worktree)}` : ref.nombre;
+    contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha, worktree: ref.worktree || '' });
     return e;
   }
 
@@ -101,7 +123,7 @@
     r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
-    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha)));
+    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha, f.col)));
     const resumen = el('span', 'resumen', f.resumen);
     // el mensaje se corta con «…»: entero al pasar el ratón, con lo justo para ubicar el commit
     resumen.title = f.pendiente ? f.resumen : `${f.resumen}\n${f.sha.slice(0, 7)} · ${f.autor} · ${f.fechaCompleta}`;
@@ -123,7 +145,8 @@
     const autor = el('span', 'autor', f.autor);
     autor.title = f.correo ? `${f.autor} <${f.correo}>` : f.autor;
     r.append(grafico(f), texto, autor, fecha, sha);
-    contexto(r, { webviewSection: 'commit', sha: f.sha });
+    if (f.stash) { r.classList.add('stash'); }
+    contexto(r, { webviewSection: f.stash ? 'stash' : 'commit', sha: f.sha });
     r.setAttribute('aria-expanded', 'false');
     return r;
   }
@@ -289,7 +312,7 @@
       lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoMax * CARRIL)));
     }
     ajustarAncho();
-    filas = filas.concat(m.filas.filter(f => !f.pendiente));
+    filas = filas.concat(m.filas.filter(f => !f.pendiente && !f.stash)); // la cuenta es de commits
     m.filas.forEach(f => porSha.set(f.sha, f));
     const frag = document.createDocumentFragment();
     m.filas.forEach((f, i) => frag.appendChild(fila(f, i)));
@@ -362,7 +385,7 @@
   // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
   function ajustarAncho() {
     const total = anchoMax * CARRIL;
-    const visible = Math.min(total, anchoUsuario || Math.max(8 * CARRIL, Math.round(innerWidth * 0.2)));
+    const visible = Math.min(total, anchoUsuario || Math.max(6 * CARRIL, Math.round(innerWidth * 0.15)));
     document.body.style.setProperty('--grafo', `${visible}px`);
     document.body.classList.toggle('recortado', visible < total);
     tirador.setAttribute('aria-valuenow', String(visible));

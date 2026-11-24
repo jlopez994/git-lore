@@ -63,4 +63,23 @@ function trazarGrafo(commits, carrilesIniciales = []) {
   return { filas, carriles };
 }
 
-module.exports = { trazarGrafo };
+// Mete los stash en la lista de commits (de hijo a padre): cada uno va antes del primer commit más viejo que él y,
+// como muy tarde, justo encima de su base. Los que tengan la base fuera de esta página esperan a la siguiente.
+function intercalarStashes(commits, stashes) {
+  const pendientes = [...stashes].sort((a, b) => b.fecha - a.fecha);
+  const colocados = new Set();
+  const enPagina = new Set(commits.map(c => c.sha));
+  const lista = [];
+  for (const c of commits) {
+    for (const s of pendientes) {
+      if (!colocados.has(s.sha) && enPagina.has(s.base) && (s.fecha > c.fecha || s.base === c.sha)) {
+        lista.push({ ...s, padres: [s.base], stash: true });
+        colocados.add(s.sha);
+      }
+    }
+    lista.push(c);
+  }
+  return { lista, colocados };
+}
+
+module.exports = { trazarGrafo, intercalarStashes };

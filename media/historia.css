@@ -1,0 +1,155 @@
+:root {
+  /* orden comprobado con el validador de paleta (daltonismo, filas vecinas); amarillo y magenta se confundían */
+  --c0: var(--vscode-charts-blue, #3794ff);
+  --c1: var(--vscode-charts-orange, #d18616);
+  --c2: var(--vscode-charts-purple, #b180d7);
+  --c3: var(--vscode-charts-green, #89d185);
+  --c4: var(--vscode-charts-red, #f14c4c);
+  --c5: var(--vscode-terminal-ansiCyan, #29b8db);
+  --mas: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
+  --menos: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
+  --borde: var(--vscode-widget-border, rgba(128, 128, 128, .25));
+  --suave: var(--vscode-descriptionForeground);
+  --fondo: var(--vscode-editor-background);
+  --salida: cubic-bezier(.22, 1, .36, 1);
+  --muelle: cubic-bezier(.34, 1.56, .64, 1);
+  --etiquetas: 168px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  padding: 16px 16px 24px;
+  color: var(--vscode-foreground);
+  background: var(--fondo);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+.cabecera { margin-bottom: 14px; }
+.cabecera h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 1.15em;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.resumen { margin: 4px 0 0; color: var(--suave); font-variant-numeric: tabular-nums; }
+
+/* cargando: unas filas falsas con un brillo, con la forma de la gráfica */
+.grafica[aria-busy="true"] {
+  height: 220px;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, transparent 0, color-mix(in srgb, var(--vscode-foreground) 6%, transparent) 50%, transparent 100%) 0 0 / 200% 100%,
+    repeating-linear-gradient(to bottom, color-mix(in srgb, var(--vscode-foreground) 5%, transparent) 0 26px, transparent 26px 34px);
+  animation: brillo 1.4s linear infinite;
+}
+@keyframes brillo { to { background-position: -200% 0, 0 0; } }
+
+.lienzo { display: grid; grid-template-columns: var(--etiquetas) minmax(0, 1fr); }
+
+.autores { display: grid; grid-auto-rows: 34px; align-content: start; border-right: 1px solid var(--borde); }
+.autor {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 2px;
+  border-radius: 4px 0 0 4px;
+  cursor: default;
+  transition: background .15s ease-out;
+}
+.autor[data-fila]:hover { background: var(--vscode-list-hoverBackground); }
+.autor .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.autor .cuenta { color: var(--suave); font-variant-numeric: tabular-nums; }
+.muestra { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+.autor.otros .muestra { background: var(--suave); }
+.autor.c0 .muestra { background: var(--c0); } .autor.c1 .muestra { background: var(--c1); }
+.autor.c2 .muestra { background: var(--c2); } .autor.c3 .muestra { background: var(--c3); }
+.autor.c4 .muestra { background: var(--c4); } .autor.c5 .muestra { background: var(--c5); }
+.leyenda-lineas { grid-template-columns: minmax(0, 1fr) auto; height: 84px; padding-left: 20px; color: var(--suave); }
+.signos { display: grid; gap: 20px; }
+.mas { color: var(--mas); }
+.menos { color: var(--menos); }
+
+.zona { position: relative; min-width: 0; }
+.puntos, .barras { display: block; overflow: visible; }
+.rejilla { stroke: var(--borde); stroke-width: 1; }
+.separador { stroke: var(--borde); stroke-dasharray: 2 4; }
+.base { stroke: var(--borde); }
+
+.punto {
+  stroke: var(--fondo);
+  stroke-width: 2;
+  fill-opacity: .85;
+  cursor: pointer;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: fill-opacity .15s ease-out, stroke .15s ease-out, transform .2s var(--muelle);
+}
+.punto.otros { fill: var(--suave); }
+.punto.c0 { fill: var(--c0); } .punto.c1 { fill: var(--c1); } .punto.c2 { fill: var(--c2); } .punto.c3 { fill: var(--c3); }
+.punto.c4 { fill: var(--c4); } .punto.c5 { fill: var(--c5); }
+.punto.senalado, .punto:focus-visible { fill-opacity: 1; stroke: var(--vscode-foreground); transform: scale(1.25); }
+.punto:focus-visible { stroke: var(--vscode-focusBorder); }
+.enfocando .punto.apagado { fill-opacity: .12; }
+
+.barra rect { transition: opacity .15s ease-out; }
+.barra .mas { fill: var(--mas); }
+.barra .menos { fill: var(--menos); }
+.barra .diana { fill: transparent; cursor: pointer; }
+.barras:hover .barra:not(.senalado) rect:not(.diana) { opacity: .45; }
+.barra.senalado .diana { fill: color-mix(in srgb, var(--vscode-foreground) 8%, transparent); }
+
+.eje { position: relative; height: 20px; color: var(--suave); font-size: .9em; }
+.marca { position: absolute; top: 4px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* primera vez: los puntos brotan y las barras crecen desde la base, siguiendo el tiempo */
+.animar .punto { animation: brotar .4s var(--muelle) both; animation-delay: var(--retardo, 0ms); }
+.animar .barra .mas { transform-box: fill-box; transform-origin: bottom; animation: crecer .35s var(--salida) both; animation-delay: var(--retardo, 0ms); }
+.animar .barra .menos { transform-box: fill-box; transform-origin: top; animation: crecer .35s var(--salida) both; animation-delay: var(--retardo, 0ms); }
+@keyframes brotar { from { transform: scale(0); } }
+@keyframes crecer { from { transform: scaleY(0); } }
+
+.globo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  gap: 2px;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 8px 10px;
+  color: var(--vscode-editorHoverWidget-foreground, var(--vscode-foreground));
+  background: var(--vscode-editorHoverWidget-background, var(--fondo));
+  border: 1px solid var(--vscode-editorHoverWidget-border, var(--borde));
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  pointer-events: none;
+  animation: aparecer .12s var(--salida);
+}
+.globo strong { overflow-wrap: anywhere; }
+.globo .quien, .globo .cuando { color: var(--suave); }
+.globo code { color: var(--vscode-textLink-foreground); font-family: var(--vscode-editor-font-family); }
+@keyframes aparecer { from { opacity: 0; } }
+
+.aviso { color: var(--suave); }
+
+@media (max-width: 520px) {
+  :root { --etiquetas: 96px; }
+  body { padding: 12px 8px 16px; }
+  .autor .cuenta { display: none; }
+  .autor { grid-template-columns: 10px minmax(0, 1fr); }
+  .leyenda-lineas { grid-template-columns: minmax(0, 1fr); }
+  .leyenda-lineas .signos { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grafica[aria-busy="true"], .animar .punto, .animar .barra rect, .globo { animation: none !important; }
+  .punto { transition: none; }
+}

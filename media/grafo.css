@@ -1,17 +1,28 @@
 :root {
   --alto: 28px;
-  --c0: var(--vscode-charts-blue, #3794ff);
-  --c1: var(--vscode-charts-orange, #d18616);
-  --c2: var(--vscode-charts-green, #89d185);
-  --c3: var(--vscode-charts-purple, #b180d7);
-  --c4: var(--vscode-charts-red, #f14c4c);
-  --c5: var(--vscode-charts-yellow, #cca700);
-  --c6: var(--vscode-terminal-ansiCyan, #29b8db);
-  --c7: var(--vscode-terminal-ansiMagenta, #d670d6);
+  /* paleta propia y viva, como la de Git Graph: los colores de gráficas del tema quedan apagados. Orden pasado
+     por el validador de paleta (daltonismo entre carriles vecinos); claro y alto contraste tienen la suya */
+  --c0: #2f9bff;
+  --c1: #ff8a1f;
+  --c2: #c06cff;
+  --c3: #2fd36b;
+  --c4: #ff4f6d;
+  --c5: #1fd1d1;
+  --c6: #f5c400;
+  --c7: #ff5fd2;
   --borde: var(--vscode-widget-border, rgba(128, 128, 128, .25));
   --suave: var(--vscode-descriptionForeground);
   --salida: cubic-bezier(.22, 1, .36, 1);
   --muelle: cubic-bezier(.34, 1.56, .64, 1);
+}
+
+body.vscode-light {
+  --c0: #0a6fd6; --c1: #d96800; --c2: #9a3fe0; --c3: #0e8a43;
+  --c4: #ef4a5a; --c5: #0a9e9e; --c6: #b38f00; --c7: #d93aa8;
+}
+body.vscode-high-contrast, body.vscode-high-contrast-light {
+  --c0: var(--vscode-charts-blue); --c1: var(--vscode-charts-orange); --c2: var(--vscode-charts-purple); --c3: var(--vscode-charts-green);
+  --c4: var(--vscode-charts-red); --c5: var(--vscode-terminal-ansiCyan); --c6: var(--vscode-charts-yellow); --c7: var(--vscode-terminal-ansiMagenta);
 }
 
 * { box-sizing: border-box; }
@@ -94,7 +105,7 @@ body {
 
 .fila {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 11em) 9em 5.5em;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 9em) 7.5em 5em;
   align-items: center;
   gap: 10px;
   height: var(--alto);
@@ -150,16 +161,18 @@ body {
 .fila:hover .nodo { r: 6; }
 .nodo.pendiente { fill: var(--vscode-editor-background); stroke-width: 2; stroke-dasharray: 3 2; }
 .nodo.pendiente.c0 { stroke: var(--c0); }
+/* un stash no es un commit de ninguna rama: nodo hueco, como los cambios sin commit */
+.grafo .nodo.stash { fill: var(--vscode-editor-background); stroke: var(--tinta); stroke-width: 2; stroke-dasharray: 2 2; }
 .fila.pendiente .resumen { color: var(--suave); font-style: italic; }
 
-.c0 { stroke: var(--c0); } .nodo.c0 { fill: var(--c0); }
-.c1 { stroke: var(--c1); } .nodo.c1 { fill: var(--c1); }
-.c2 { stroke: var(--c2); } .nodo.c2 { fill: var(--c2); }
-.c3 { stroke: var(--c3); } .nodo.c3 { fill: var(--c3); }
-.c4 { stroke: var(--c4); } .nodo.c4 { fill: var(--c4); }
-.c5 { stroke: var(--c5); } .nodo.c5 { fill: var(--c5); }
-.c6 { stroke: var(--c6); } .nodo.c6 { fill: var(--c6); }
-.c7 { stroke: var(--c7); } .nodo.c7 { fill: var(--c7); }
+.c0 { stroke: var(--c0); --tinta: var(--c0); } .nodo.c0 { fill: var(--c0); }
+.c1 { stroke: var(--c1); --tinta: var(--c1); } .nodo.c1 { fill: var(--c1); }
+.c2 { stroke: var(--c2); --tinta: var(--c2); } .nodo.c2 { fill: var(--c2); }
+.c3 { stroke: var(--c3); --tinta: var(--c3); } .nodo.c3 { fill: var(--c3); }
+.c4 { stroke: var(--c4); --tinta: var(--c4); } .nodo.c4 { fill: var(--c4); }
+.c5 { stroke: var(--c5); --tinta: var(--c5); } .nodo.c5 { fill: var(--c5); }
+.c6 { stroke: var(--c6); --tinta: var(--c6); } .nodo.c6 { fill: var(--c6); }
+.c7 { stroke: var(--c7); --tinta: var(--c7); } .nodo.c7 { fill: var(--c7); }
 .nodo.head { stroke: var(--vscode-foreground); }
 
 .texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
@@ -175,20 +188,35 @@ body {
   /* px enteros a propósito: con un line-height relativo o con decimales, Segoe UI deja el texto pegado al
      borde de abajo, y un chip que crezca con la letra se saldría de la fila de 28px. El zoom de VS Code
      escala el webview entero, así que el chip crece con él */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: 18px;
-  padding: 0 7px;
+  padding: 0 7px 0 5px;
   overflow: hidden;
-  border: 1px solid currentColor;
+  border: 1px solid transparent;
   border-radius: 9px;
   font-size: 11px;
   line-height: 16px;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ref.head { color: var(--vscode-badge-foreground); background: var(--vscode-badge-background); border-color: transparent; font-weight: 600; }
-.ref.rama { color: var(--c0); }
-.ref.remota { color: var(--suave); }
-.ref.tag { color: var(--c5); border-style: dashed; }
+.ref .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ref svg { flex: none; width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* el chip lleva el color del carril de su commit: se ve de un vistazo qué rama es cada línea */
+.l0 { --color: var(--c0); } .l1 { --color: var(--c1); } .l2 { --color: var(--c2); } .l3 { --color: var(--c3); }
+.l4 { --color: var(--c4); } .l5 { --color: var(--c5); } .l6 { --color: var(--c6); } .l7 { --color: var(--c7); }
+.ref.rama, .ref.head { color: #fff; background: color-mix(in srgb, var(--color) 72%, #000); }
+.ref.head { font-weight: 600; box-shadow: 0 0 0 1px var(--vscode-editor-background), 0 0 0 2px var(--color); }
+.ref.remota { color: var(--vscode-foreground); background: color-mix(in srgb, var(--color) 16%, transparent); border-color: color-mix(in srgb, var(--color) 65%, transparent); }
+.ref.remota svg { stroke: var(--color); }
+.ref.remota { flex-shrink: 3; } /* con poco sitio cede antes la remota que la rama local */
+.ref.tag { color: var(--vscode-foreground); background: color-mix(in srgb, var(--vscode-foreground) 10%, transparent); }
+.ref.tag svg { stroke: var(--c6); }
+.ref.stash { color: var(--vscode-foreground); background: color-mix(in srgb, var(--color) 16%, transparent); border: 1px dashed var(--color); }
+.ref.stash svg, .ref.worktree svg { stroke: var(--color); }
+.ref.worktree { color: var(--vscode-foreground); border-color: var(--color); }
+.fila.stash .resumen { font-style: italic; color: var(--suave); }
+.seleccionada.stash .resumen { color: inherit; }
 
 .sha {
   position: relative;
@@ -304,7 +332,7 @@ body {
 
 .filtrando .grafo, .filtrando .carriles { display: none; }
 .filtrando .detalle { grid-template-columns: minmax(0, 1fr); padding-left: 12px; }
-.filtrando .fila { grid-template-columns: minmax(0, 1fr) minmax(0, 11em) 9em 5.5em; padding-left: 12px; }
+.filtrando .fila { grid-template-columns: minmax(0, 1fr) minmax(0, 9em) 7.5em 5em; padding-left: 12px; }
 
 .esqueleto { cursor: default; animation: aparecer .35s var(--salida) both; animation-delay: var(--retardo, 0ms); }
 .esqueleto:hover { background: none; }
@@ -333,8 +361,8 @@ body {
 .aviso { padding: 24px 12px; color: var(--suave); text-align: center; }
 
 @container (max-width: 640px) {
-  .fila, .filtrando .fila { grid-template-columns: auto minmax(0, 1fr) 5.5em; }
-  .filtrando .fila { grid-template-columns: minmax(0, 1fr) 5.5em; }
+  .fila, .filtrando .fila { grid-template-columns: auto minmax(0, 1fr) 5em; }
+  .filtrando .fila { grid-template-columns: minmax(0, 1fr) 5em; }
   .autor, .fecha { display: none; }
   .cuerpo { grid-template-columns: minmax(0, 1fr); }
   #alcance { max-width: 9em; }

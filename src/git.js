@@ -1,9 +1,12 @@
 'use strict';
 // Puerta única a git: la API de la extensión vscode.git y el binario que ella usa.
 const cp = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
-const { parsearBlame, parsearLog, parsearDiff, FORMATO_LOG } = require('./nucleo/parseo');
+const {
+  parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+} = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
 const t = vscode.l10n.t;
@@ -82,6 +85,12 @@ async function historial(repo, uri, { desde, hasta, limite = 500 } = {}, token) 
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args, { token }));
 }
 
+// las mismas opciones que historial(): mismos commits, para cruzarlos por sha
+async function lineasDeFichero(repo, uri, limite) {
+  const args = ['log', '--follow', '-M', '--numstat', `-n${limite}`, `--format=${FORMATO_SHA}`, '--', rutaRelativa(repo, uri)];
+  return parsearNumstat(await ejecutar(repo.rootUri.fsPath, args));
+}
+
 async function ficherosDeCommit(repo, sha) {
   const args = ['show', '-M', '--name-status', '--first-parent', `--format=${FORMATO_LOG}`, sha];
   const [commit] = parsearLog(await ejecutar(repo.rootUri.fsPath, args));
@@ -96,11 +105,13 @@ const ALCANCES = {
   actual: ['HEAD'],
 };
 
-async function grafo(repo, { saltar = 0, limite = 300, alcance = 'todas' } = {}) {
+// extra: HEADs separados de otros worktrees, que no salen con --branches (solo shas, nunca opciones)
+async function grafo(repo, { saltar = 0, limite = 300, alcance = 'todas', extra = [] } = {}) {
   // repo recién creado: «git log HEAD» fallaría con «unknown revision»
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
   // refs completas: el tipo de cada insignia sale del prefijo y no de si el nombre lleva «/»
-  const args = ['log', ...ALCANCES[alcance], '--decorate=full', '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
+  const revisiones = alcance === 'actual' ? [] : extra.filter(s => /^[0-9a-f]{40,64}$/.test(s));
+  const args = ['log', ...ALCANCES[alcance], ...revisiones, '--decorate=full', '--date-order', `--skip=${saltar}`, `-n${limite}`, `--format=${FORMATO_LOG}`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath, args));
 }
 
@@ -124,6 +135,31 @@ async function resolverRef(repo, ref) {
   } catch {
     throw new Error(t('Not a valid ref: {0}', ref));
   }
+}
+
+async function stashes(repo) {
+  return parsearStash(await ejecutar(repo.rootUri.fsPath, ['stash', 'list', `--format=${FORMATO_STASH}`]));
+}
+
+// los demás worktrees del repo (el propio se quita: es el que ya se está viendo). realpath: git da la ruta real
+// y VS Code puede tener la del enlace (/tmp → /private/tmp en macOS)
+async function worktrees(repo) {
+  const real = r => { try { return fs.realpathSync(r); } catch { return path.resolve(r); } };
+  const propio = real(repo.rootUri.fsPath);
+  const todos = parsearWorktrees(await ejecutar(repo.rootUri.fsPath, ['worktree', 'list', '--porcelain']));
+  return todos.filter(w => real(w.ruta) !== propio);
+}
+
+// el nombre stash@{n} se mueve con cada stash nuevo: se busca por sha justo antes de tocarlo
+async function nombreDeStash(repo, sha) {
+  const s = (await stashes(repo)).find(x => x.sha === sha);
+  if (!s) { throw new Error(t('That stash no longer exists')); }
+  return s.nombre;
+}
+
+async function usarStash(repo, sha, accion) {
+  if (!['apply', 'pop', 'drop'].includes(accion)) { throw new Error(`stash ${accion}`); }
+  return modificar(repo, ['stash', accion, await nombreDeStash(repo, sha)]);
 }
 
 // recibe SHAs ya resueltos; hasta undefined = árbol de trabajo
@@ -183,6 +219,6 @@ function uriEnRevision(repo, ruta, ref) {
 }
 
 module.exports = {
-  ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, ErrorGit,
+  ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, ErrorGit,
 };

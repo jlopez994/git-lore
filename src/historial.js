@@ -110,6 +110,7 @@ function registrar(context, log) {
   );
   seguirEditor(vscode.window.activeTextEditor);
   describir();
+  return () => proveedor.objetivo && proveedor.objetivo.uri; // el fichero que enseña la vista
 }
 
 module.exports = { registrar };
