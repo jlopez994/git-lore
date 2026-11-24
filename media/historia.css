@@ -1,18 +1,6 @@
 :root {
-  /* orden comprobado con el validador de paleta (daltonismo, filas vecinas); amarillo y magenta se confundían */
-  --c0: var(--vscode-charts-blue, #3794ff);
-  --c1: var(--vscode-charts-orange, #d18616);
-  --c2: var(--vscode-charts-purple, #b180d7);
-  --c3: var(--vscode-charts-green, #89d185);
-  --c4: var(--vscode-charts-red, #f14c4c);
-  --c5: var(--vscode-terminal-ansiCyan, #29b8db);
   --mas: var(--vscode-gitDecoration-addedResourceForeground, #81b88b);
   --menos: var(--vscode-gitDecoration-deletedResourceForeground, #c74e39);
-  --borde: var(--vscode-widget-border, rgba(128, 128, 128, .25));
-  --suave: var(--vscode-descriptionForeground);
-  --fondo: var(--vscode-editor-background);
-  --salida: cubic-bezier(.22, 1, .36, 1);
-  --muelle: cubic-bezier(.34, 1.56, .64, 1);
   --etiquetas: 168px;
 }
 

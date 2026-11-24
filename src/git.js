@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 const {
-  parsearBlame, parsearLog, parsearShortlog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+  parsearBlame, parsearLog, parsearShortlog, parsearLineasPorAutor, FORMATO_AUTOR, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
@@ -161,6 +161,13 @@ async function autores(repo) {
   return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
 }
 
+// toda la historia de HEAD: en un repo grande tarda, por eso se puede cancelar. Los merges no suman líneas
+async function lineasPorAutor(repo, token) {
+  if (!repo.state.HEAD || !repo.state.HEAD.commit) { return new Map(); }
+  return parsearLineasPorAutor(await ejecutar(repo.rootUri.fsPath,
+    ['log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
+}
+
 // con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
 // sin correo git guarda «Nombre <>»: se ancla entera con regex escapada, o «Anabel» casaría con «Ana Anabel <>»
 async function commitsDeAutor(repo, autor, limite = 200) {
@@ -255,5 +262,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, commitsDeAutor, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, lineasPorAutor, commitsDeAutor, ErrorGit,
 };

@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -265,6 +265,12 @@
         "title": "%command.refresh%",
         "category": "Git Lore",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "gitLore.contributorsChart",
+        "title": "%command.contributorsChart%",
+        "category": "Git Lore",
+        "icon": "$(pie-chart)"
       }
     ],
     "menus": {
@@ -400,6 +406,10 @@
         {
           "command": "gitLore.refreshContributors",
           "when": "false"
+        },
+        {
+          "command": "gitLore.contributorsChart",
+          "when": "gitOpenRepositoryCount != 0"
         }
       ],
       "editor/title": [
@@ -494,9 +504,14 @@
           "group": "navigation@2"
         },
         {
+          "command": "gitLore.contributorsChart",
+          "when": "view == gitLore.contributors",
+          "group": "navigation@1"
+        },
+        {
           "command": "gitLore.refreshContributors",
           "when": "view == gitLore.contributors",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [

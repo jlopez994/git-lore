@@ -43,5 +43,6 @@
   "command.graph.openWorktree": "Open Worktree in New Window",
   "command.previousRevision": "Open Previous Revision",
   "command.nextRevision": "Open Next Revision",
-  "view.contributors": "Contributors"
+  "view.contributors": "Contributors",
+  "command.contributorsChart": "Show Contributors Chart"
 }

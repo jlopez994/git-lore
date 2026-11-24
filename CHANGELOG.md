@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+- Contributors chart: the chart icon in the Contributors view (or `Show Contributors Chart`) opens a bubble per
+  person, sized by their commits to the current branch, and a table with everyone's commits, share and lines added
+  and deleted. Hover a bubble or a row for the details; it updates when you switch branch or commit.
+- Visual File History: red and cyan swap places, so neighboring rows are easier to tell apart in light themes too.
+
 ## 0.7.0
 
 - Contributors view in the Source Control panel: everyone who committed to the current branch, by number of commits

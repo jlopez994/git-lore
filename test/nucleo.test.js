@@ -254,3 +254,28 @@ test('contribuidores: shortlog agrupado por correo, con el nombre más usado', (
   const real = parsearShortlog(git('shortlog', '-sne', 'HEAD'));
   assert.deepStrictEqual(real.map(x => [x.nombre, x.commits]), [['Ana', 3]]);
 });
+
+test('contribuidores: líneas por persona con la misma clave que shortlog', () => {
+  const { parsearLineasPorAutor, parsearShortlog, claveDePersona, FORMATO_AUTOR } = require('../src/nucleo/parseo');
+  const l = parsearLineasPorAutor('\x1eANA@x.com\x1fAna\n\n3\t1\ta.txt\n-\t-\tlogo.png\n\x1eana@x.com\x1fAna López\n\n2\t0\tb.txt\n\x1e\x1fSin Correo\n\n1\t1\tc.txt\n');
+  assert.deepStrictEqual(Object.fromEntries(l), { 'ana@x.com': { mas: 5, menos: 1 }, 'sin correo': { mas: 1, menos: 1 } });
+  assert.strictEqual(claveDePersona('', 'Sin Correo'), 'sin correo');
+  // real: cada persona de shortlog encuentra sus líneas
+  const real = parsearLineasPorAutor(git('log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`));
+  for (const p of parsearShortlog(git('shortlog', '-sne', 'HEAD'))) { assert.ok(real.get(claveDePersona(p.correo, p.nombre)).mas > 0); }
+});
+
+test('burbujas: ninguna se solapa y todas caben en la caja', () => {
+  const { empaquetar, encajar } = require('../media/burbujas');
+  const radios = [45, 16, 16, 12, 10, 8.5, 7, 7, 6.6, 3, 1, 1, 1];
+  const sitios = encajar(empaquetar(radios, { hueco: 1, aspecto: 2.5 }), 900, 300);
+  assert.strictEqual(sitios.length, radios.length);
+  for (let i = 0; i < sitios.length; i++) {
+    const a = sitios[i];
+    assert.ok(a.x - a.r >= 3.9 && a.x + a.r <= 900.1 - 3.9 && a.y - a.r >= 3.9 && a.y + a.r <= 300.1 - 3.9);
+    for (let j = i + 1; j < sitios.length; j++) { assert.ok(Math.hypot(a.x - sitios[j].x, a.y - sitios[j].y) >= a.r + sitios[j].r); }
+  }
+  // proporcional: el doble de radio sigue siendo el doble tras encajar
+  assert.ok(Math.abs(sitios[0].r / sitios[1].r - 45 / 16) < 1e-9);
+  assert.deepStrictEqual(encajar(empaquetar([5]), 100, 100).map(s => [s.x, s.y, s.r]), [[50, 50, 46]]);
+});
