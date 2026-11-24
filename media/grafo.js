@@ -4,7 +4,7 @@
   const vscode = acquireVsCodeApi();
   const T = window.TEXTOS;
   const ALTO = 28;
-  const CARRIL = 16;
+  const CARRIL = 12;
   const NS = 'http://www.w3.org/2000/svg';
   const COLORES = 8;
 
@@ -20,6 +20,9 @@
   let hayMas = false;
   let pidiendo = false;
   let anchoMax = 1;
+  const tirador = document.getElementById('tirador');
+  // ancho del grafo elegido arrastrando el borde (0 = automático); getState sobrevive a ocultar el panel
+  let anchoUsuario = (vscode.getState() || {}).anchoGrafo || 0;
   /** @type {HTMLElement | null} */
   let detalle = null;
 
@@ -260,7 +263,8 @@
     fin.replaceChildren();
     hayMas = m.hayMas;
     const antes = anchoMax;
-    anchoMax = Math.max(anchoMax, ...m.filas.map(f => f.ancho));
+    // al recargar (otro alcance, tras una acción) el ancho se vuelve a medir: si no, solo crecería
+    anchoMax = Math.max(m.reiniciar ? 1 : anchoMax, ...m.filas.map(f => f.ancho));
     if (m.reiniciar) {
       filas = [];
       porSha.clear();
@@ -274,6 +278,7 @@
       // carriles nuevos: todas las filas comparten ancho de grafo para que las columnas cuadren
       lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoMax * CARRIL)));
     }
+    ajustarAncho();
     filas = filas.concat(m.filas.filter(f => !f.pendiente));
     m.filas.forEach(f => porSha.set(f.sha, f));
     const frag = document.createDocumentFragment();
@@ -337,6 +342,36 @@
       if (s) { (/** @type {HTMLElement} */ (s)).focus(); }
     }
   });
+
+  // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
+  function ajustarAncho() {
+    const total = anchoMax * CARRIL;
+    const visible = Math.min(total, anchoUsuario || Math.max(8 * CARRIL, Math.round(innerWidth * 0.2)));
+    document.body.style.setProperty('--grafo', `${visible}px`);
+    document.body.classList.toggle('recortado', visible < total);
+    tirador.setAttribute('aria-valuenow', String(visible));
+  }
+
+  function fijarAncho(px) {
+    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoMax * CARRIL, Math.round(px)));
+    ajustarAncho();
+    vscode.setState({ ...(vscode.getState() || {}), anchoGrafo: anchoUsuario });
+  }
+
+  tirador.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    tirador.setPointerCapture(e.pointerId);
+    const origen = lista.getBoundingClientRect().left + 8; // el padding izquierdo de .fila
+    const mover = ev => fijarAncho(ev.clientX - origen);
+    tirador.addEventListener('pointermove', mover);
+    tirador.addEventListener('lostpointercapture', () => tirador.removeEventListener('pointermove', mover), { once: true });
+  });
+  tirador.addEventListener('dblclick', () => fijarAncho(0));
+  tirador.addEventListener('keydown', e => {
+    const paso = { ArrowLeft: -CARRIL, ArrowRight: CARRIL }[e.key];
+    if (paso) { e.preventDefault(); fijarAncho(parseFloat(getComputedStyle(document.body).getPropertyValue('--grafo')) + paso); }
+  });
+  window.addEventListener('resize', ajustarAncho);
 
   traer.addEventListener('click', () => {
     traer.disabled = true;

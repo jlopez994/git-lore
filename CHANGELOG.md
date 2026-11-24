@@ -7,7 +7,10 @@
 - Commit graph: right-click a branch or tag badge to check it out, merge it into the current branch or delete it.
   Checking out a remote branch creates the local branch that tracks it, or switches to it if it exists.
 - Commit graph: a Fetch button in the toolbar fetches from all remotes and redraws the graph.
+- Commit graph: narrower lanes, and the graph takes at most a fifth of the panel (wider repos fade out at the edge).
+  Drag its edge to resize it, or double-click it to go back to automatic.
 - Fix: local branches with a `/` in their name (`feat/x`) were drawn as remote branches.
+- Fix: the graph width shrinks again after switching to fewer branches or reloading.
 
 ## 0.3.0
 

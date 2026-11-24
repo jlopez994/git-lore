@@ -46,7 +46,8 @@ const ACCIONES = {
   async checkout(repo, arg) {
     if (arg.webviewSection === 'commit') { return repo.checkout(shaDe(arg)); }
     const { ref, refs } = await refDe(repo, arg, ['rama', 'remota', 'tag']);
-    if (arg.tipo !== 'remota') { return repo.checkout(ref); }
+    // el tag por su ref completa: con el nombre corto git preferiría una rama homónima
+    if (arg.tipo !== 'remota') { return repo.checkout(arg.tipo === 'tag' ? PREFIJO.tag + ref : ref); }
     // origin/x → x local que sigue a origin/x (o la que ya había)
     const local = ramaLocalDe(ref, repo.state.remotes.map(r => r.name));
     if (refs.some(r => r.completo === PREFIJO.rama + local)) { return repo.checkout(local); }
@@ -70,7 +71,7 @@ const ACCIONES = {
 
   async merge(repo, arg) {
     const { ref } = await refDe(repo, arg, ['rama', 'remota']);
-    return repo.merge(ref);
+    return repo.merge(PREFIJO[arg.tipo] + ref); // completa: una rama y un tag pueden llamarse igual
   },
 
   cherryPick: (repo, arg) => git.cherryPick(repo, shaDe(arg)),

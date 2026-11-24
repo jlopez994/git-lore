@@ -12,6 +12,7 @@ const { elegirRepo, copiarSha, abrirEnRemoto, abrirCambios, relativa } = require
 
 const t = vscode.l10n.t;
 const PAGINA = 300;
+const MAX_RECARGA = 3 * PAGINA; // tras una acción no se vuelve a pedir todo lo que se haya cargado con scroll
 const SHA = /^[0-9a-f]{40,64}$/;
 // no es hexadecimal: nunca pasa por SHA ni llega a git
 const PENDIENTES = 'pendientes';
@@ -46,6 +47,8 @@ function html(webview, raizExt, nonce, id) {
 </header>
 <main id="lista" class="lista" role="list"></main>
 <div id="fin" class="fin" aria-hidden="true"></div>
+<div id="tirador" class="tirador" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="24"
+  aria-label="${t('Graph width')}" title="${t('Drag to resize the graph, double-click to reset')}"></div>
 <script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)};</script>
 <script nonce="${nonce}" src="${recurso('grafo.js')}"></script>
 </body>
@@ -110,7 +113,7 @@ function abrir(context, repo) {
     if (reiniciar) { generacion++; }
     const mia = generacion;
     const desde = reiniciar ? 0 : saltar;
-    const limite = mantener ? Math.max(PAGINA, saltar) : PAGINA;
+    const limite = mantener ? Math.min(MAX_RECARGA, Math.max(PAGINA, saltar)) : PAGINA;
     cargandoMas = !reiniciar;
     try {
       const commits = await git.grafo(repo, { saltar: desde, limite, alcance });

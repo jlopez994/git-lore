@@ -138,7 +138,7 @@ async function modificar(repo, args) {
   try {
     await ejecutar(repo.rootUri.fsPath, args, { entorno: SIN_TTY });
   } finally {
-    await repo.status(); // también tras un conflicto: el SCM tiene que enseñarlo ya
+    await repo.status().catch(() => { }); // también tras un conflicto; si falla, que no tape el error de git
   }
 }
 
