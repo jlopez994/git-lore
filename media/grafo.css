@@ -261,9 +261,9 @@ body {
   padding: 0 12px 0 8px;
   background: color-mix(in srgb, var(--vscode-list-activeSelectionBackground) 12%, var(--vscode-editor-background));
   border-bottom: 1px solid var(--borde);
-  animation: desplegar .22s var(--salida) both;
 }
-@keyframes desplegar { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+/* el detalle sale de golpe; la carga solo se ve si tarda: un commit ya visto o rápido no parpadea */
+.cuerpo.cargando { animation: aparecer .2s var(--salida) .15s both; }
 .carriles { display: block; height: 100%; }
 .carriles line { stroke-width: 2; stroke-linecap: round; }
 

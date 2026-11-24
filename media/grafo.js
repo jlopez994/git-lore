@@ -212,6 +212,10 @@
     detalle = null;
   }
 
+  // un commit no cambia: lo ya cargado se reutiliza mientras viva la vista (con tope, por memoria)
+  const detallesVistos = new Map();
+  const TOPE_DETALLES = 200;
+
   function abrirDetalle(r) {
     const abierto = detalle && detalle.dataset.sha === r.dataset.sha;
     cerrarDetalle();
@@ -230,6 +234,8 @@
     detalle.append(carrilesDe(porSha.get(r.dataset.sha)), espera);
     r.after(detalle);
     r.setAttribute('aria-expanded', 'true');
+    const visto = detallesVistos.get(r.dataset.sha);
+    if (visto) { return pintarDetalle(visto); }
     vscode.postMessage({ tipo: 'detalle', sha: r.dataset.sha });
   }
 
@@ -284,7 +290,14 @@
       lista.replaceChildren(el('p', 'aviso', m.mensaje));
       return;
     }
-    if (m.tipo === 'detalle') { return pintarDetalle(m); }
+    if (m.tipo === 'detalle') {
+      if (!m.error) {
+        detallesVistos.delete(m.sha); // reinsertar lo deja el último en salir
+        detallesVistos.set(m.sha, m);
+        if (detallesVistos.size > TOPE_DETALLES) { detallesVistos.delete(detallesVistos.keys().next().value); }
+      }
+      return pintarDetalle(m);
+    }
     if (m.tipo === 'pendientes') {
       const r = lista.querySelector('.fila.pendiente .resumen');
       if (r) { r.textContent = m.texto; }

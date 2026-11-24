@@ -7,6 +7,8 @@
   The same commit menu as File History: copy the SHA, open it on the remote.
 - Visual File History: the SHA in the tooltip no longer has extra background on its left, and counts of one say
   "1 commit" and "1 author".
+- Commit graph: commit details open instantly the second time (they are kept while the graph is open), without the
+  expand animation, and the loading placeholder only shows if loading takes a moment.
 
 - The commit graph redraws by itself when any branch, remote branch, tag or stash moves: VS Code's background
   auto-fetch (`git.autofetch`), a fetch or push from the terminal, or branches, tags and stashes made outside it.
