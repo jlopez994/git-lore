@@ -1,6 +1,7 @@
 {
   "{0} authors": "{0} autores",
   "{0} commits": "{0} commits",
+  "{0} has no older revisions": "{0} no tiene revisiones más antiguas",
   "{0} no longer exists in the working tree": "{0} ya no existe en el árbol de trabajo",
   "All branches": "Todas las ramas",
   "binary": "binario",

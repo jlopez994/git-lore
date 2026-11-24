@@ -40,5 +40,7 @@
   "command.graph.applyStash": "Aplicar stash",
   "command.graph.popStash": "Aplicar y quitar stash (pop)",
   "command.graph.dropStash": "Descartar stash…",
-  "command.graph.openWorktree": "Abrir worktree en una ventana nueva"
+  "command.graph.openWorktree": "Abrir worktree en una ventana nueva",
+  "command.previousRevision": "Abrir la revisión anterior",
+  "command.nextRevision": "Abrir la revisión siguiente"
 }

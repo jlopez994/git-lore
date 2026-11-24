@@ -231,3 +231,17 @@ test('stash: parseo de stash list y colocación sobre su base', () => {
   const wts = parsearWorktrees('worktree /r\nHEAD 111\nbranch refs/heads/main\n\nworktree /r-wt\nHEAD 222\ndetached\n\nworktree /bare\nbare\n\nworktree /borrado\nHEAD 333\nprunable gitdir file points to non-existent location\n');
   assert.deepStrictEqual(wts, [{ ruta: '/r', head: '111', rama: 'main' }, { ruta: '/r-wt', head: '222' }]);
 });
+
+test('historia: un merge sin name-status toma la ruta del commit anterior, no la actual', () => {
+  const { cambiosDe } = require('../src/nucleo/historia');
+  const commits = [ // de nuevo a viejo, como git log
+    { sha: 'c3', padres: ['c2'], ficheros: [{ estado: 'M', ruta: 'nuevo.txt' }] },
+    { sha: 'c2', padres: ['c1'], ficheros: [{ estado: 'R', ruta: 'nuevo.txt', rutaAnterior: 'viejo.txt' }] },
+    { sha: 'm', padres: ['c0', 'x'], ficheros: [] },
+    { sha: 'c0', padres: [], ficheros: [{ estado: 'A', ruta: 'viejo.txt' }] },
+  ];
+  const c = cambiosDe(commits, 'nuevo.txt');
+  assert.strictEqual(c.get('m').ruta, 'viejo.txt');
+  assert.strictEqual(c.get('c2').rutaAnterior, 'viejo.txt');
+  assert.strictEqual(c.get('c0').refAnterior, null);
+});

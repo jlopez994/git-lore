@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -242,6 +242,18 @@
         "command": "gitLore.graph.openWorktree",
         "title": "%command.graph.openWorktree%",
         "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.previousRevision",
+        "title": "%command.previousRevision%",
+        "category": "Git Lore",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "gitLore.nextRevision",
+        "title": "%command.nextRevision%",
+        "category": "Git Lore",
+        "icon": "$(arrow-right)"
       }
     ],
     "menus": {
@@ -365,6 +377,14 @@
         {
           "command": "gitLore.graph.openWorktree",
           "when": "false"
+        },
+        {
+          "command": "gitLore.previousRevision",
+          "when": "resourceScheme == git || resourceScheme == file && gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "gitLore.nextRevision",
+          "when": "resourceScheme == git"
         }
       ],
       "editor/title": [
@@ -372,6 +392,16 @@
           "command": "gitLore.toggleFileBlame",
           "when": "resourceScheme == file && gitOpenRepositoryCount != 0",
           "group": "navigation@90"
+        },
+        {
+          "command": "gitLore.previousRevision",
+          "when": "resourceScheme == git || resourceScheme == file && gitOpenRepositoryCount != 0",
+          "group": "navigation@88"
+        },
+        {
+          "command": "gitLore.nextRevision",
+          "when": "resourceScheme == git",
+          "group": "navigation@89"
         }
       ],
       "editor/title/context": [
