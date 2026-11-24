@@ -1,4 +1,5 @@
 {
+  "{0} no longer exists in the working tree": "{0} ya no existe en el árbol de trabajo",
   "All branches": "Todas las ramas",
   "Branch {0} is not fully merged. Delete it anyway?": "La rama {0} no está fusionada del todo. ¿Borrarla igualmente?",
   "Branch, tag or commit SHA": "Rama, tag o SHA de un commit",
@@ -19,6 +20,7 @@
   "Drag to resize the graph, double-click to reset": "Arrastra para cambiar el ancho del grafo; doble clic para volver al automático",
   "Enter a name": "Escribe un nombre",
   "Fetch from all remotes": "Fetch de todos los remotos",
+  "File not found in commit {0}": "El fichero ya no está en el commit {0}",
   "Files": "Ficheros",
   "Filter by message, author, ref or SHA": "Filtrar por mensaje, autor, ref o SHA",
   "Filter commits": "Filtrar commits",
@@ -49,6 +51,8 @@
   "Reset": "Reset",
   "Reset {0} to {1}": "Reset de {0} a {1}",
   "Reset {0} to {1} and discard all changes?": "¿Reset de {0} a {1} descartando todos los cambios?",
+  "Restore": "Restaurar",
+  "Restore {0} to its version in {1}?": "¿Restaurar {0} a su versión de {1}?",
   "Show commit": "Ver commit",
   "Show Commit Graph": "Ver grafo de commits",
   "Show in Source Control": "Ver en Control de código fuente",
@@ -61,5 +65,7 @@
   "Uncommitted changes": "Cambios sin commit",
   "Uncommitted changes ({0})": "Cambios sin commit ({0})",
   "Uncommitted changes and the commits after {0} on this branch are lost.": "Se pierden los cambios sin commit y los commits de esta rama posteriores a {0}.",
-  "Working Tree": "Árbol de trabajo"
+  "Uncommitted changes to this file are lost.": "Se pierden los cambios sin commit de este fichero.",
+  "Working Tree": "Árbol de trabajo",
+  "working tree": "árbol de trabajo"
 }

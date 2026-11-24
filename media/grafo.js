@@ -231,6 +231,7 @@
     m.ficheros.forEach((f, i) => {
       const b = el('button', `fichero e${f.estado}`);
       b.dataset.indice = String(i);
+      contexto(b, { webviewSection: 'fichero', sha: m.sha, indice: i, estadoFichero: f.estado });
       const corte = f.ruta.lastIndexOf('/');
       b.append(el('span', 'estado', f.estado), el('span', 'nombre', f.ruta.slice(corte + 1)),
         el('span', 'ruta', f.rutaAnterior ? `${f.rutaAnterior} →` : f.ruta.slice(0, Math.max(corte, 0))));
@@ -265,6 +266,8 @@
     const antes = anchoMax;
     // al recargar (otro alcance, tras una acción) el ancho se vuelve a medir: si no, solo crecería
     anchoMax = Math.max(m.reiniciar ? 1 : anchoMax, ...m.filas.map(f => f.ancho));
+    // una recarga (cambios en el repo, tras una acción) no debe cerrar el commit que se estaba mirando
+    const reabrir = m.reiniciar && detalle ? detalle.dataset.sha : null;
     if (m.reiniciar) {
       filas = [];
       porSha.clear();
@@ -285,6 +288,11 @@
     m.filas.forEach((f, i) => frag.appendChild(fila(f, i)));
     lista.appendChild(frag);
     if (!filas.length) { lista.replaceChildren(el('p', 'aviso', T.sinCommits)); }
+    const abierta = reabrir && [...lista.querySelectorAll('.fila')].find(r => (/** @type {HTMLElement} */ (r)).dataset.sha === reabrir);
+    if (abierta) {
+      abierta.classList.add('seleccionada');
+      abrirDetalle(abierta);
+    }
     filtrar();
   });
 

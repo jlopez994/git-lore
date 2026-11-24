@@ -28,5 +28,12 @@
   "command.graph.revert": "Revertir commit",
   "command.graph.reset": "Reset de la rama actual a este commit…",
   "command.graph.deleteBranch": "Borrar rama…",
-  "command.graph.deleteTag": "Borrar tag…"
+  "command.graph.deleteTag": "Borrar tag…",
+  "command.graph.openDiff": "Abrir cambios",
+  "command.graph.openRevision": "Abrir el fichero en esta revisión",
+  "command.graph.compareWorking": "Comparar con el fichero actual",
+  "command.graph.openFile": "Abrir el fichero",
+  "command.graph.copyPath": "Copiar ruta",
+  "command.graph.copyRelativePath": "Copiar ruta relativa",
+  "command.graph.restoreFile": "Restaurar el fichero a esta revisión…"
 }

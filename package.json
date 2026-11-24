@@ -181,6 +181,41 @@
         "command": "gitLore.graph.copySha",
         "title": "%command.copySha%",
         "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.openDiff",
+        "title": "%command.graph.openDiff%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.openRevision",
+        "title": "%command.graph.openRevision%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.compareWorking",
+        "title": "%command.graph.compareWorking%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.openFile",
+        "title": "%command.graph.openFile%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.copyPath",
+        "title": "%command.graph.copyPath%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.copyRelativePath",
+        "title": "%command.graph.copyRelativePath%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.restoreFile",
+        "title": "%command.graph.restoreFile%",
+        "category": "Git Lore"
       }
     ],
     "menus": {
@@ -255,6 +290,34 @@
         },
         {
           "command": "gitLore.graph.copySha",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.openDiff",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.openRevision",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.compareWorking",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.openFile",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.copyPath",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.copyRelativePath",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.restoreFile",
           "when": "false"
         }
       ],
@@ -412,6 +475,41 @@
           "command": "gitLore.graph.copySha",
           "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(commit|rama|remota|tag)$/",
           "group": "8_copiar@1"
+        },
+        {
+          "command": "gitLore.graph.openDiff",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero",
+          "group": "1_ver@1"
+        },
+        {
+          "command": "gitLore.graph.openRevision",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero",
+          "group": "1_ver@2"
+        },
+        {
+          "command": "gitLore.graph.compareWorking",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D",
+          "group": "1_ver@3"
+        },
+        {
+          "command": "gitLore.graph.openFile",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D",
+          "group": "1_ver@4"
+        },
+        {
+          "command": "gitLore.graph.copyPath",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero",
+          "group": "2_copiar@1"
+        },
+        {
+          "command": "gitLore.graph.copyRelativePath",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero",
+          "group": "2_copiar@2"
+        },
+        {
+          "command": "gitLore.graph.restoreFile",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == fichero && estadoFichero != D",
+          "group": "9_restaurar@1"
         }
       ]
     },

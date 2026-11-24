@@ -7,8 +7,9 @@ const git = require('./git');
 const { trazarGrafo } = require('./nucleo/grafo');
 const { clasificarRef } = require('./nucleo/refs');
 const grafoAcciones = require('./grafo-acciones');
+const grafoFicheros = require('./grafo-ficheros');
 const { nombreDeRemoto } = require('./nucleo/remotos');
-const { elegirRepo, copiarSha, abrirEnRemoto, abrirCambios, relativa } = require('./acciones');
+const { elegirRepo, copiarSha, abrirEnRemoto, relativa } = require('./acciones');
 
 const t = vscode.l10n.t;
 const PAGINA = 300;
@@ -76,14 +77,6 @@ async function detalle(repo, sha) {
   };
 }
 
-// el webview manda un índice, no una ruta: se vuelve a sacar del commit
-async function abrirFichero(repo, sha, indice) {
-  const c = await git.ficherosDeCommit(repo, sha);
-  const f = Number.isInteger(indice) && c.ficheros[indice];
-  if (!f) { return; }
-  return abrirCambios(repo, { sha, ...f, refAnterior: c.padres.length ? undefined : null });
-}
-
 function abrir(context, repo) {
   const raiz = repo.rootUri.fsPath;
   const existente = paneles.get(raiz);
@@ -109,7 +102,7 @@ function abrir(context, repo) {
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
   const textoPendientes = n => t('Uncommitted changes ({0})', n);
 
-  // mantener: tras una acción se recargan todos los commits que ya había, para no perder el scroll
+  // mantener: tras una acción se recargan los commits que ya había (hasta MAX_RECARGA) para no perder el scroll
   async function cargar(reiniciar, mantener) {
     if (!reiniciar && cargandoMas) { return; }
     if (reiniciar) { generacion++; }
@@ -190,7 +183,7 @@ function abrir(context, repo) {
         return detalle(repo, m.sha).then(d => enviar({ tipo: 'detalle', ...d }),
           e => enviar({ tipo: 'detalle', sha: m.sha, error: e.message }));
       }
-      if (m.tipo === 'fichero') { return abrirFichero(repo, m.sha, m.indice).catch(fallo); }
+      if (m.tipo === 'fichero') { return grafoFicheros.abrirFichero(repo, m.sha, m.indice).catch(fallo); }
       if (m.tipo === 'remoto') { return abrirEnRemoto(repo, m.sha).then(undefined, fallo); }
       if (m.tipo === 'copiar') { return copiarSha(m.sha); }
     }),
@@ -216,6 +209,7 @@ function registrar(context, protegido) {
   })));
 
   grafoAcciones.registrar(context, protegido, id => vistas.get(id));
+  grafoFicheros.registrar(context, protegido, id => vistas.get(id));
 
   // como el de Git Graph: un clic en la barra de estado abre el grafo del repo activo
   const boton = vscode.window.createStatusBarItem('gitLore.graph', vscode.StatusBarAlignment.Left);

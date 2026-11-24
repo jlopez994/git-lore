@@ -130,4 +130,4 @@ function registrar(context, protegido, vistaDe) {
   context.subscriptions.push(vscode.commands.registerCommand('gitLore.graph.copySha', arg => protegido(() => copiarSha(shaDe(arg || {})))));
 }
 
-module.exports = { registrar };
+module.exports = { registrar, shaDe, confirmar };

@@ -28,5 +28,12 @@
   "command.graph.revert": "Revert Commit",
   "command.graph.reset": "Reset Current Branch to Here…",
   "command.graph.deleteBranch": "Delete Branch…",
-  "command.graph.deleteTag": "Delete Tag…"
+  "command.graph.deleteTag": "Delete Tag…",
+  "command.graph.openDiff": "Open Changes",
+  "command.graph.openRevision": "Open File at This Revision",
+  "command.graph.compareWorking": "Compare with Working File",
+  "command.graph.openFile": "Open File",
+  "command.graph.copyPath": "Copy Path",
+  "command.graph.copyRelativePath": "Copy Relative Path",
+  "command.graph.restoreFile": "Restore File to This Revision…"
 }

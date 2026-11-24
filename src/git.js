@@ -161,6 +161,11 @@ async function crearTag(repo, nombre, sha) {
   return modificar(repo, ['tag', nombre, sha]);
 }
 
+// «--» y una ruta que sale del propio commit: nada de opciones colándose
+async function restaurarFichero(repo, sha, ruta) {
+  return modificar(repo, ['checkout', sha, '--', ruta]);
+}
+
 const MODOS_RESET = ['soft', 'mixed', 'hard'];
 async function resetear(repo, sha, modo) {
   if (!MODOS_RESET.includes(modo)) { throw new Error(`reset --${modo}`); }
@@ -179,5 +184,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, ErrorGit,
 };
