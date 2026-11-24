@@ -161,12 +161,15 @@ async function autores(repo) {
   return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
 }
 
-// --fixed-strings con «<correo>»: ese correo literal (un «+» no es regex), sin distinguir mayúsculas como hace
-// parsearShortlog al agrupar; sin correo git guarda «Nombre <>», que no casa con «Anabel»
+// con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
+// sin correo git guarda «Nombre <>»: se ancla entera con regex escapada, o «Anabel» casaría con «Ana Anabel <>»
 async function commitsDeAutor(repo, autor, limite = 200) {
-  const patron = autor.correo ? `<${autor.correo}>` : `${autor.nombre} <>`;
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const patron = autor.correo
+    ? ['--fixed-strings', `--author=<${autor.correo}>`]
+    : ['--extended-regexp', `--author=^${escapar(autor.nombre)} <>$`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--fixed-strings', '--regexp-ignore-case', `--author=${patron}`, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+    ['log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
 }
 
 async function stashes(repo) {

@@ -21,6 +21,7 @@
   let actual = null;
   let resaltar = (vscode.getState() || {}).resaltar !== false;
   let buscandoHead = 0; // páginas que quedan por pedir buscando la fila de HEAD
+  let headInalcanzable = false; // se buscó y no está en este alcance: no se ofrece hasta la próxima recarga
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
@@ -181,7 +182,9 @@
     document.body.classList.toggle('filtrando', !!buscar.value.trim());
     filtrar();
     pedirMas();
-    observada = null; // vuelve a medir: al filtrar la píldora se esconde y al quitar el filtro vuelve si toca
+    // observe() sobre lo que ya se observa no vuelve a medir: se suelta y se vuelve a coger
+    if (observada) { vigia.unobserve(observada); }
+    observada = null;
     vigilarHead();
   });
 
@@ -349,7 +352,7 @@
       abierta.classList.add('seleccionada');
       abrirDetalle(abierta);
     }
-    if (m.reiniciar) { actual = m.actual; }
+    if (m.reiniciar) { actual = m.actual; headInalcanzable = false; }
     marcarAjenas();
     filtrar();
     if (buscandoHead) { seguirBuscandoHead(); }
@@ -397,7 +400,7 @@
     if (r) { vigia.observe(r); } else { mostrarAqui(!!actual, false); }
   }
   function mostrarAqui(si, arriba) {
-    aqui.hidden = !si || !actual || !!buscar.value.trim();
+    aqui.hidden = !si || !actual || headInalcanzable || !!buscar.value.trim();
     if (aqui.hidden) { return; }
     aqui.textContent = `${arriba ? '↑' : '↓'} ${actual.nombre}`;
     aqui.title = T.irAqui;
@@ -418,7 +421,12 @@
   }
   function seguirBuscandoHead() {
     if (filaHead()) { return irAHead(); }
-    if (!hayMas || buscandoHead <= 0) { buscandoHead = 0; return; }
+    if (!hayMas || buscandoHead <= 0) {
+      // sin más páginas no va a salir (un HEAD separado con «Ramas locales», por ejemplo)
+      if (!hayMas) { headInalcanzable = true; mostrarAqui(false, false); }
+      buscandoHead = 0;
+      return;
+    }
     if (pidiendo) { return; }
     buscandoHead--;
     pidiendo = true;
