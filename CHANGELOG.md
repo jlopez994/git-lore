@@ -4,6 +4,7 @@
 
 - Branch and tag badges show long names in full (up to 24em) and shrink only when the row is crowded; hover one for its
   full name. Their text no longer sits on the bottom border with Windows fonts.
+- Hover a commit message to read it in full, with its short SHA, author and date.
 - Clicking a commit no longer nudges its row, so the graph lines stay joined. Rows fade in without moving.
 
 ## 0.4.0
