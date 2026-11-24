@@ -21,6 +21,10 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   parents and the changed files, each one opening its diff. A row above HEAD shows your uncommitted changes, and you can
   show all branches, local branches only or the current branch. It loads more commits as you scroll and filters by
   message, author, ref or SHA. Works the same on public and private repositories.
+  Right-click a commit (or press Shift+F10 on it) to create a branch or tag there, check it out, cherry-pick it, revert it
+  or reset the current branch to it. Right-click a branch or tag badge to check it out, merge it into the current
+  branch or delete it; checking out a remote branch creates the local branch that tracks it. The download button in the
+  graph toolbar fetches from all remotes. Deleting and `reset --hard` ask first.
 - **Compare.** `Compare Branches or Refs…` (the compare icon in the Source Control title) lists the files that differ between two branches, tags or commits (you can
   type any SHA), or between a ref and your working tree. Click a file for its diff; swap the sides from the view title.
 

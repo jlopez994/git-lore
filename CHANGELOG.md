@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+- Commit graph: right-click a commit to create a branch or tag on it, check it out, cherry-pick it, revert it or reset
+  the current branch to it (soft, mixed or hard). Shift+F10 opens the same menu from the keyboard.
+- Commit graph: right-click a branch or tag badge to check it out, merge it into the current branch or delete it.
+  Checking out a remote branch creates the local branch that tracks it, or switches to it if it exists.
+- Commit graph: a Fetch button in the toolbar fetches from all remotes and redraws the graph.
+- Fix: local branches with a `/` in their name (`feat/x`) were drawn as remote branches.
+
 ## 0.3.0
 
 - A "Graph" button in the status bar opens the commit graph of the active repository, like Git Graph. Right-click the

@@ -82,7 +82,12 @@ body {
   transition: background .15s ease-out, transform .2s var(--muelle);
 }
 .boton:hover { background: var(--vscode-toolbar-hoverBackground); }
-.boton:active { transform: scale(.9) rotate(-90deg); }
+.boton { display: inline-grid; place-items: center; padding: 0; }
+.boton:active { transform: scale(.9); }
+#refrescar:active { transform: scale(.9) rotate(-90deg); }
+#fetch:active svg { transform: translateY(2px); }
+#fetch svg { transition: transform .2s var(--muelle); }
+.boton:disabled { opacity: .5; cursor: default; }
 
 .lista { padding-bottom: 8px; }
 

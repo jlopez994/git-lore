@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -131,6 +131,56 @@
         "command": "gitLore.openComparedFile",
         "title": "%command.openChanges%",
         "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.checkout",
+        "title": "%command.graph.checkout%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.createBranch",
+        "title": "%command.graph.createBranch%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.createTag",
+        "title": "%command.graph.createTag%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.merge",
+        "title": "%command.graph.merge%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.cherryPick",
+        "title": "%command.graph.cherryPick%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.revert",
+        "title": "%command.graph.revert%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.reset",
+        "title": "%command.graph.reset%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.deleteBranch",
+        "title": "%command.graph.deleteBranch%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.deleteTag",
+        "title": "%command.graph.deleteTag%",
+        "category": "Git Lore"
+      },
+      {
+        "command": "gitLore.graph.copySha",
+        "title": "%command.copySha%",
+        "category": "Git Lore"
       }
     ],
     "menus": {
@@ -166,6 +216,46 @@
         {
           "command": "gitLore.lineHistory",
           "when": "editorTextFocus && resourceScheme == file"
+        },
+        {
+          "command": "gitLore.graph.checkout",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.createBranch",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.createTag",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.merge",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.cherryPick",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.revert",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.reset",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.deleteBranch",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.deleteTag",
+          "when": "false"
+        },
+        {
+          "command": "gitLore.graph.copySha",
+          "when": "false"
         }
       ],
       "editor/title": [
@@ -250,6 +340,78 @@
           "command": "gitLore.openOnRemote",
           "when": "view == gitLore.history && viewItem == commit",
           "group": "1_commit@3"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "gitLore.graph.createBranch",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "1_crear@1"
+        },
+        {
+          "command": "gitLore.graph.createTag",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "1_crear@2"
+        },
+        {
+          "command": "gitLore.graph.checkout",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "2_checkout@1"
+        },
+        {
+          "command": "gitLore.graph.cherryPick",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "3_cambios@1"
+        },
+        {
+          "command": "gitLore.graph.revert",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "3_cambios@2"
+        },
+        {
+          "command": "gitLore.graph.reset",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == commit",
+          "group": "3_cambios@3"
+        },
+        {
+          "command": "gitLore.graph.checkout",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead",
+          "group": "1_rama@1"
+        },
+        {
+          "command": "gitLore.graph.merge",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead",
+          "group": "1_rama@2"
+        },
+        {
+          "command": "gitLore.graph.deleteBranch",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == rama && !esHead",
+          "group": "9_borrar@1"
+        },
+        {
+          "command": "gitLore.graph.checkout",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == remota",
+          "group": "1_rama@1"
+        },
+        {
+          "command": "gitLore.graph.merge",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == remota",
+          "group": "1_rama@2"
+        },
+        {
+          "command": "gitLore.graph.checkout",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == tag",
+          "group": "1_rama@1"
+        },
+        {
+          "command": "gitLore.graph.deleteTag",
+          "when": "webviewId == 'gitLore.graph' && webviewSection == tag",
+          "group": "9_borrar@1"
+        },
+        {
+          "command": "gitLore.graph.copySha",
+          "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(commit|rama|remota|tag)$/",
+          "group": "8_copiar@1"
         }
       ]
     },

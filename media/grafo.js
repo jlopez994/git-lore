@@ -14,6 +14,7 @@
   const cuenta = document.getElementById('cuenta');
   const fin = document.getElementById('fin');
   const refrescar = document.getElementById('refrescar');
+  const traer = document.getElementById('fetch');
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
@@ -77,11 +78,15 @@
     return g;
   }
 
-  function insignia(ref) {
-    const head = ref.startsWith('HEAD -> ');
-    const nombre = head ? ref.slice(8) : ref;
-    const tipo = nombre.startsWith('tag: ') ? 'tag' : head ? 'head' : nombre.includes('/') ? 'remota' : 'rama';
-    return el('span', `ref ${tipo}`, nombre.replace(/^tag: /, ''));
+  // el menú contextual nativo lee esto: webviewSection decide qué entradas salen (package.json, webview/context)
+  function contexto(e, datos) {
+    e.dataset.vscodeContext = JSON.stringify({ ...datos, panel: window.PANEL, preventDefaultContextMenuItems: true });
+  }
+
+  function insignia(ref, sha) {
+    const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
+    contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
+    return e;
   }
 
   function fila(f, i) {
@@ -92,10 +97,11 @@
     r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
-    f.refs.filter(ref => ref !== 'HEAD' && !ref.endsWith('/HEAD')).forEach(ref => texto.appendChild(insignia(ref)));
+    f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha)));
     texto.appendChild(el('span', 'resumen', f.resumen));
-    r.dataset.busqueda = `${f.resumen} ${f.autor} ${f.refs.join(' ')} ${f.sha}`.toLowerCase();
+    r.dataset.busqueda = `${f.resumen} ${f.autor} ${f.refs.map(ref => ref.nombre).join(' ')} ${f.sha}`.toLowerCase();
     if (f.pendiente) {
+      contexto(r, { webviewSection: 'pendiente' });
       r.classList.add('pendiente');
       r.dataset.pendiente = '1';
       r.title = T.verCambios;
@@ -108,6 +114,7 @@
     const fecha = el('span', 'fecha', f.fecha);
     fecha.title = f.fechaCompleta;
     r.append(grafico(f), texto, el('span', 'autor', f.autor), fecha, sha);
+    contexto(r, { webviewSection: 'commit', sha: f.sha });
     r.setAttribute('aria-expanded', 'false');
     return r;
   }
@@ -153,6 +160,7 @@
 
   function cargando(si) {
     refrescar.classList.toggle('girando', si);
+    if (!si) { traer.disabled = false; }
     lista.setAttribute('aria-busy', String(si));
   }
 
@@ -315,6 +323,12 @@
     const r = /** @type {HTMLElement} */ (e.target);
     if (!esFila(r)) { return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.click(); }
+    // el menú contextual nativo solo sale con el ratón: desde el teclado se le manda el evento a la fila
+    if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+      e.preventDefault();
+      const caja = r.getBoundingClientRect();
+      r.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: caja.left + 48, clientY: caja.bottom }));
+    }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const paso = n => (e.key === 'ArrowDown' ? n.nextElementSibling : n.previousElementSibling);
@@ -322,6 +336,12 @@
       while (s && (!esFila(s) || (/** @type {HTMLElement} */ (s)).hidden)) { s = paso(s); }
       if (s) { (/** @type {HTMLElement} */ (s)).focus(); }
     }
+  });
+
+  traer.addEventListener('click', () => {
+    traer.disabled = true;
+    cargando(true);
+    vscode.postMessage({ tipo: 'fetch' });
   });
 
   refrescar.addEventListener('click', () => {

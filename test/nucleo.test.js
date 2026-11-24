@@ -159,3 +159,23 @@ test('cada texto de la interfaz tiene traducción al español', () => {
   const claves = [...fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8').matchAll(/"%([^%]+)%"/g)].map(m => m[1]);
   assert.deepStrictEqual(claves.filter(k => !(k in nls)), []);
 });
+
+test('refs: tipo por el prefijo completo, no por la barra', () => {
+  const { clasificarRef, ramaLocalDe } = require('../src/nucleo/refs');
+  assert.deepStrictEqual(clasificarRef('HEAD -> refs/heads/feat/x'), { nombre: 'feat/x', tipo: 'rama', esHead: true });
+  assert.deepStrictEqual(clasificarRef('refs/remotes/origin/main'), { nombre: 'origin/main', tipo: 'remota', esHead: false });
+  assert.deepStrictEqual(clasificarRef('tag: refs/tags/v1.0'), { nombre: 'v1.0', tipo: 'tag', esHead: false });
+  assert.strictEqual(clasificarRef('HEAD'), null);
+  assert.strictEqual(clasificarRef('refs/remotes/origin/HEAD'), null);
+  assert.strictEqual(clasificarRef('refs/stash'), null);
+  assert.strictEqual(ramaLocalDe('origin/feat/x', ['origin']), 'feat/x');
+  assert.strictEqual(ramaLocalDe('mi/remoto/main', ['mi', 'mi/remoto']), 'main');
+});
+
+test('refs: nombres de rama o tag que git no aceptaría', () => {
+  const { nombreValido } = require('../src/nucleo/refs');
+  for (const ok of ['feat/x', 'v1.2.0', 'arreglo-ñ']) { assert.ok(nombreValido(ok), ok); }
+  for (const mal of ['-x', 'a b', 'a..b', 'a~1', 'x.lock', 'x/', '/x', 'a//b', 'a/.b', 'x@{1}', 'a:b', 'x.']) {
+    assert.ok(!nombreValido(mal), mal);
+  }
+});

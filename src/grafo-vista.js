@@ -5,6 +5,8 @@ const path = require('path');
 const vscode = require('vscode');
 const git = require('./git');
 const { trazarGrafo } = require('./nucleo/grafo');
+const { clasificarRef } = require('./nucleo/refs');
+const grafoAcciones = require('./grafo-acciones');
 const { nombreDeRemoto } = require('./nucleo/remotos');
 const { elegirRepo, copiarSha, abrirEnRemoto, abrirCambios, relativa } = require('./acciones');
 
@@ -14,8 +16,9 @@ const SHA = /^[0-9a-f]{40,64}$/;
 // no es hexadecimal: nunca pasa por SHA ni llega a git
 const PENDIENTES = 'pendientes';
 const paneles = new Map(); // raíz → panel
+const vistas = new Map(); // id opaco del panel → { repo, recargar }: el menú contextual dice de qué panel viene
 
-function html(webview, raizExt, nonce) {
+function html(webview, raizExt, nonce, id) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
     copiado: t('Copied'), sinCommits: t('No commits'), copiar: t('Copy SHA'), ficheros: t('Files'), padres: t('Parents'),
@@ -38,11 +41,12 @@ function html(webview, raizExt, nonce) {
     <option value="actual">${t('Current branch')}</option>
   </select>
   <span id="cuenta" class="cuenta" aria-live="polite"></span>
+  <button id="fetch" class="boton" title="${t('Fetch from all remotes')}" aria-label="${t('Fetch from all remotes')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v9m-4-4 4 4 4-4M2 14h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button id="refrescar" class="boton" title="${t('Refresh')}" aria-label="${t('Refresh')}">↻</button>
 </header>
 <main id="lista" class="lista" role="list"></main>
 <div id="fin" class="fin" aria-hidden="true"></div>
-<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)};</script>
+<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)};</script>
 <script nonce="${nonce}" src="${recurso('grafo.js')}"></script>
 </body>
 </html>`;
@@ -95,18 +99,21 @@ function abrir(context, repo) {
   let cargandoMas = false;
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
+  const id = crypto.randomUUID();
   let alcance = 'todas'; // aquí y no en el webview: sin retainContextWhenHidden se reinicia al ocultarlo
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
   const textoPendientes = n => t('Uncommitted changes ({0})', n);
 
-  async function cargar(reiniciar) {
+  // mantener: tras una acción se recargan todos los commits que ya había, para no perder el scroll
+  async function cargar(reiniciar, mantener) {
     if (!reiniciar && cargandoMas) { return; }
     if (reiniciar) { generacion++; }
     const mia = generacion;
     const desde = reiniciar ? 0 : saltar;
+    const limite = mantener ? Math.max(PAGINA, saltar) : PAGINA;
     cargandoMas = !reiniciar;
     try {
-      const commits = await git.grafo(repo, { saltar: desde, limite: PAGINA, alcance });
+      const commits = await git.grafo(repo, { saltar: desde, limite, alcance });
       if (mia !== generacion || cerrado) { return; }
       const head = repo.state.HEAD && repo.state.HEAD.commit;
       const n = reiniciar && head ? pendientes(repo) : 0;
@@ -123,11 +130,11 @@ function abrir(context, repo) {
           autor: c.autor,
           fecha: relativa(c.fecha),
           fechaCompleta: new Date(c.fecha).toLocaleString(vscode.env.language),
-          refs: c.refs,
+          refs: c.refs.map(clasificarRef).filter(Boolean),
           head: c.sha === head,
         };
       });
-      enviar({ tipo: 'filas', filas, reiniciar, alcance, hayMas: commits.length === PAGINA });
+      enviar({ tipo: 'filas', filas, reiniciar, alcance, hayMas: commits.length === limite });
     } catch (e) {
       if (mia === generacion) { enviar({ tipo: 'error', mensaje: e.message }); }
     } finally {
@@ -142,6 +149,13 @@ function abrir(context, repo) {
   };
   let firma = firmaActual();
   let temporizador;
+  // la acción ya recarga: que el cambio de HEAD que provoca no dispare una segunda recarga
+  const recargar = () => {
+    firma = firmaActual();
+    clearTimeout(temporizador);
+    return cargar(true, true);
+  };
+  vistas.set(id, { repo, recargar });
   const suscripciones = [
     repo.state.onDidChange(() => {
       const ahora = firmaActual();
@@ -160,6 +174,11 @@ function abrir(context, repo) {
         return cargar(true);
       }
       if (m.tipo === 'verCambios') { return vscode.commands.executeCommand('workbench.view.scm'); }
+      if (m.tipo === 'fetch') {
+        return repo.fetch({ all: true })
+          .catch(e => { vscode.window.showErrorMessage((e.stderr && e.stderr.trim()) || e.message); }) // sin esperar al aviso
+          .finally(recargar);
+      }
       if (typeof m.sha !== 'string' || !SHA.test(m.sha)) { return; }
       const fallo = e => vscode.window.showErrorMessage(e.message);
       if (m.tipo === 'detalle') {
@@ -175,11 +194,12 @@ function abrir(context, repo) {
   panel.onDidDispose(() => {
     cerrado = true;
     paneles.delete(raiz);
+    vistas.delete(id);
     suscripciones.forEach(d => d.dispose());
     clearTimeout(temporizador);
   });
 
-  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'));
+  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'), id);
 }
 
 function registrar(context, protegido) {
@@ -189,6 +209,8 @@ function registrar(context, protegido) {
     if (!repo) { return vscode.window.showWarningMessage(t('No git repository is open')); }
     abrir(context, repo);
   })));
+
+  grafoAcciones.registrar(context, protegido, id => vistas.get(id));
 
   // como el de Git Graph: un clic en la barra de estado abre el grafo del repo activo
   const boton = vscode.window.createStatusBarItem('gitLore.graph', vscode.StatusBarAlignment.Left);
