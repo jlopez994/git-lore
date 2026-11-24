@@ -172,16 +172,16 @@ body {
   flex: 0 1 auto;
   min-width: 3.5em;
   max-width: 24em;
-  /* alto y line-height absolutos (a partir de la letra del editor): con un line-height relativo,
-     Segoe UI deja el texto pegado al borde de abajo */
-  --alto-ref: calc(var(--vscode-font-size, 13px) * 1.4);
-  height: var(--alto-ref);
+  /* px enteros a propósito: con un line-height relativo o con decimales, Segoe UI deja el texto pegado al
+     borde de abajo, y un chip que crezca con la letra se saldría de la fila de 28px. El zoom de VS Code
+     escala el webview entero, así que el chip crece con él */
+  height: 18px;
   padding: 0 7px;
   overflow: hidden;
   border: 1px solid currentColor;
-  border-radius: calc(var(--alto-ref) / 2);
-  font-size: calc(var(--vscode-font-size, 13px) * .85);
-  line-height: calc(var(--alto-ref) - 2px);
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
