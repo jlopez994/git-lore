@@ -175,7 +175,8 @@ body {
 .c7 { stroke: var(--c7); --tinta: var(--c7); } .nodo.c7 { fill: var(--c7); }
 .nodo.head { stroke: var(--vscode-foreground); }
 
-.texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+/* holgura de 3px con margen negativo: el aro de la rama actual sobresale del chip y el overflow lo cortaría */
+.texto { display: flex; align-items: center; gap: 6px; min-width: 0; margin: -3px; padding: 3px; overflow: hidden; }
 .resumen { flex: 1 1 0; min-width: 8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autor, .fecha { overflow: hidden; color: var(--suave); text-overflow: ellipsis; white-space: nowrap; }
 .seleccionada .autor, .seleccionada .fecha { color: inherit; opacity: .85; }

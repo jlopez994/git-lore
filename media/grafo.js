@@ -26,7 +26,9 @@
   /** @type {HTMLElement | null} */
   let detalle = null;
 
-  const x = c => c * CARRIL + CARRIL / 2;
+  // 1px de margen a la izquierda: el nodo del carril 0 crece al pasar el ratón y el grafo recorta lo que sale
+  const x = c => 1 + c * CARRIL + CARRIL / 2;
+  const anchoGrafo = () => anchoMax * CARRIL + 2;
   const y = v => v * ALTO;
   const esFila = n => n && n.classList.contains('fila') && !n.classList.contains('esqueleto');
 
@@ -40,7 +42,7 @@
   function svg(clase, alto) {
     const s = document.createElementNS(NS, 'svg');
     s.setAttribute('class', clase);
-    s.setAttribute('width', String(anchoMax * CARRIL));
+    s.setAttribute('width', String(anchoGrafo()));
     if (alto) { s.setAttribute('height', String(alto)); }
     s.setAttribute('aria-hidden', 'true');
     return s;
@@ -309,7 +311,7 @@
     }
     if (anchoMax !== antes && !m.reiniciar) {
       // carriles nuevos: todas las filas comparten ancho de grafo para que las columnas cuadren
-      lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoMax * CARRIL)));
+      lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoGrafo())));
     }
     ajustarAncho();
     filas = filas.concat(m.filas.filter(f => !f.pendiente && !f.stash)); // la cuenta es de commits
@@ -384,7 +386,7 @@
 
   // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
   function ajustarAncho() {
-    const total = anchoMax * CARRIL;
+    const total = anchoGrafo();
     const visible = Math.min(total, anchoUsuario || Math.max(6 * CARRIL, Math.round(innerWidth * 0.15)));
     document.body.style.setProperty('--grafo', `${visible}px`);
     document.body.classList.toggle('recortado', visible < total);
@@ -392,7 +394,7 @@
   }
 
   function fijarAncho(px) {
-    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoMax * CARRIL, Math.round(px)));
+    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoGrafo(), Math.round(px)));
     ajustarAncho();
     vscode.setState({ ...(vscode.getState() || {}), anchoGrafo: anchoUsuario });
   }

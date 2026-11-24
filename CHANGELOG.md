@@ -5,6 +5,7 @@
 - The commit graph redraws by itself when any branch, remote branch, tag or stash moves: VS Code's background
   auto-fetch (`git.autofetch`), a fetch or push from the terminal, or branches, tags and stashes made outside it.
   Before, it only noticed changes to the current branch and to uncommitted files.
+- Fix: hovering a row no longer clips the ring of the current branch badge or the node of the leftmost lane.
 
 ## 0.6.0
 
