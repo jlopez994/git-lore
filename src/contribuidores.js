@@ -15,8 +15,17 @@ class Contribuidores {
     this.onDidChangeTreeData = this.cambio.event;
   }
 
+  // HEAD cambia al cambiar de rama, hacer commit o hacer pull, y al arrancar llega después de abrir el repo
   fijar(repo) {
     this.repo = repo;
+    if (this.vigia) { this.vigia.dispose(); }
+    const firma = () => repo && repo.state.HEAD && `${repo.state.HEAD.name}@${repo.state.HEAD.commit}`;
+    let vista = firma();
+    this.vigia = repo && repo.state.onDidChange(() => {
+      if (firma() === vista) { return; }
+      vista = firma();
+      this.cambio.fire();
+    });
     this.cambio.fire();
   }
 
@@ -88,6 +97,7 @@ function registrar(context, log) {
   }, e => log(`contributors: ${e.message}`));
   context.subscriptions.push(
     vista,
+    { dispose: () => proveedor.vigia && proveedor.vigia.dispose() },
     vscode.window.onDidChangeActiveTextEditor(elegir),
     vscode.commands.registerCommand('gitLore.refreshContributors', () => proveedor.cambio.fire()),
   );

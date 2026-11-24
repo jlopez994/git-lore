@@ -161,11 +161,12 @@ async function autores(repo) {
   return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
 }
 
-// --fixed-strings con «<correo>»: coincide con ese correo exacto y no como expresión regular (un «+» en el correo)
+// --fixed-strings con «<correo>»: ese correo literal (un «+» no es regex), sin distinguir mayúsculas como hace
+// parsearShortlog al agrupar; sin correo git guarda «Nombre <>», que no casa con «Anabel»
 async function commitsDeAutor(repo, autor, limite = 200) {
-  const patron = autor.correo ? `<${autor.correo}>` : autor.nombre;
+  const patron = autor.correo ? `<${autor.correo}>` : `${autor.nombre} <>`;
   return parsearLog(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--fixed-strings', `--author=${patron}`, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+    ['log', 'HEAD', '--fixed-strings', '--regexp-ignore-case', `--author=${patron}`, `-n${limite}`, `--format=${FORMATO_LOG}`]));
 }
 
 async function stashes(repo) {
