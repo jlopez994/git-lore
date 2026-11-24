@@ -58,7 +58,7 @@ function abrir(context, repo, log) {
   let cerrado = false;
   let generacion = 0;
   let cancelar = null;
-  let hechas = null; // { commit, lineas }: volver a abrir el panel en el mismo commit no recorre otra vez la historia
+  let hechas = null; // { commit, lineas }: recargar este panel sin cambiar de commit no recorre otra vez la historia
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
 
   // primero los commits (shortlog es rápido) y luego las líneas, que recorren toda la historia

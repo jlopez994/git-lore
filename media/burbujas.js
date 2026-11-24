@@ -10,7 +10,7 @@
     const sitios = [];
     const positivos = radios.filter(r => r > 0);
     // relativo también al mayor: con 10.000 commits frente a 1, un paso del menor daría millones de vueltas
-    const paso = positivos.length ? Math.max(0.5, Math.min(...positivos), Math.max(...positivos) / 50) / 4 : 1;
+    const paso = positivos.length ? Math.max(0.5, Math.max(Math.min(...positivos), Math.max(...positivos) / 50) / 4) : 1;
     for (const r of radios) {
       let x = 0;
       let y = 0;
