@@ -19,7 +19,7 @@
   const aqui = document.getElementById('aqui');
   /** @type {{sha: string, nombre: string} | null} */
   let actual = null;
-  let resaltar = (vscode.getState() || {}).resaltar !== false;
+  let resaltar = window.RESALTAR === true;
   let buscandoHead = 0; // páginas que quedan por pedir buscando la fila de HEAD
   let headInalcanzable = false; // se buscó y no está en este alcance: no se ofrece hasta la próxima recarga
   let filas = [];
@@ -297,6 +297,11 @@
   }
 
   window.addEventListener('message', ({ data: m }) => {
+    if (m.tipo === 'resaltar') {
+      resaltar = m.valor === true;
+      aplicarResaltado();
+      return;
+    }
     if (m.tipo === 'error') {
       pidiendo = false;
       cargando(false);
@@ -383,8 +388,8 @@
   }
   botonResaltar.addEventListener('click', () => {
     resaltar = !resaltar;
-    vscode.setState({ ...(vscode.getState() || {}), resaltar });
     aplicarResaltado();
+    vscode.postMessage({ tipo: 'resaltar', valor: resaltar });
   });
   aplicarResaltado();
 

@@ -100,7 +100,12 @@ body {
 #fetch:active svg { transform: translateY(2px); }
 #fetch svg { transition: transform .2s var(--muelle); }
 .boton:disabled { opacity: .5; cursor: default; }
-#resaltar[aria-pressed="true"] { color: var(--vscode-focusBorder); background: var(--vscode-toolbar-activeBackground, var(--vscode-toolbar-hoverBackground)); }
+/* como los conmutadores del buscador de VS Code (Aa, .*): fondo y borde del tema, el icono se sigue leyendo */
+#resaltar[aria-pressed="true"] {
+  color: var(--vscode-inputOption-activeForeground, var(--vscode-icon-foreground));
+  background: var(--vscode-inputOption-activeBackground, rgba(36, 137, 219, .51));
+  box-shadow: inset 0 0 0 1px var(--vscode-inputOption-activeBorder, #2488db);
+}
 
 /* lo que no es historia de HEAD queda en segundo plano; las líneas no, que son las que llevan a tu rama */
 .fila > .texto, .fila > .autor, .fila > .fecha, .fila > .sha, .nodo { transition: opacity .2s ease-out; }

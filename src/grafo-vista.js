@@ -15,12 +15,14 @@ const t = vscode.l10n.t;
 const PAGINA = 300;
 const MAX_RECARGA = 3 * PAGINA; // tras una acción no se vuelve a pedir todo lo que se haya cargado con scroll
 const SHA = /^[0-9a-f]{40,64}$/;
+const RESALTAR = 'graph.highlightCurrentBranch';
+const resaltarAhora = () => vscode.workspace.getConfiguration('gitLore').get(RESALTAR, false) === true;
 // no es hexadecimal: nunca pasa por SHA ni llega a git
 const PENDIENTES = 'pendientes';
 const paneles = new Map(); // raíz → panel
 const vistas = new Map(); // id opaco del panel → { repo, recargar }: el menú contextual dice de qué panel viene
 
-function html(webview, raizExt, nonce, id) {
+function html(webview, raizExt, nonce, id, resaltar) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
     copiado: t('Copied'), sinCommits: t('No commits'), copiar: t('Copy SHA'), ficheros: t('Files'), padres: t('Parents'),
@@ -43,7 +45,7 @@ function html(webview, raizExt, nonce, id) {
     <option value="actual">${t('Current branch')}</option>
   </select>
   <span id="cuenta" class="cuenta" aria-live="polite"></span>
-  <button id="resaltar" class="boton" aria-pressed="true" title="${t('Highlight the history of the current branch')}" aria-label="${t('Highlight the history of the current branch')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg></button>
+  <button id="resaltar" class="boton" aria-pressed="${resaltar}" title="${t('Highlight the history of the current branch')}" aria-label="${t('Highlight the history of the current branch')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg></button>
   <button id="fetch" class="boton" title="${t('Fetch from all remotes')}" aria-label="${t('Fetch from all remotes')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1v9m-4-4 4 4 4-4M2 14h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   <button id="refrescar" class="boton" title="${t('Refresh')}" aria-label="${t('Refresh')}"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </header>
@@ -52,7 +54,7 @@ function html(webview, raizExt, nonce, id) {
 <button id="aqui" class="aqui" hidden></button>
 <div id="tirador" class="tirador" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="24"
   aria-label="${t('Graph width')}" title="${t('Drag to resize the graph, double-click to reset')}"></div>
-<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)};</script>
+<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)}; window.RESALTAR = ${resaltar};</script>
 <script nonce="${nonce}" src="${recurso('grafo.js')}"></script>
 </body>
 </html>`;
@@ -220,6 +222,16 @@ function abrir(context, repo) {
         alcance = m.valor;
         return cargar(true);
       }
+      // el botón del grafo cambia el ajuste: así lo recuerdan los demás paneles y las próximas sesiones
+      if (m.tipo === 'resaltar' && typeof m.valor === 'boolean') {
+        const cfg = vscode.workspace.getConfiguration('gitLore');
+        const enWorkspace = cfg.inspect(RESALTAR).workspaceValue !== undefined;
+        return cfg.update(RESALTAR, m.valor, enWorkspace ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global)
+          .then(undefined, e => {
+            vscode.window.showErrorMessage(e.message);
+            enviar({ tipo: 'resaltar', valor: resaltarAhora() }); // el botón cambió antes de guardar: vuelve al real
+          });
+      }
       if (m.tipo === 'verCambios') { return vscode.commands.executeCommand('workbench.view.scm'); }
       if (m.tipo === 'fetch') {
         return repo.fetch({ all: true })
@@ -235,6 +247,9 @@ function abrir(context, repo) {
       if (m.tipo === 'fichero') { return grafoFicheros.abrirFichero(repo, m.sha, m.indice).catch(fallo); }
       if (m.tipo === 'remoto') { return abrirEnRemoto(repo, m.sha).then(undefined, fallo); }
       if (m.tipo === 'copiar') { return copiarSha(m.sha); }
+    }),
+    vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration(`gitLore.${RESALTAR}`)) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); }
     }),
   ];
 
@@ -258,7 +273,7 @@ function abrir(context, repo) {
     clearTimeout(esperaRefs);
   });
 
-  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'), id);
+  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'), id, resaltarAhora());
 }
 
 function registrar(context, protegido) {
