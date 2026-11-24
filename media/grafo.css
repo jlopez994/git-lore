@@ -111,10 +111,10 @@ body {
   background: var(--vscode-list-activeSelectionBackground);
   color: var(--vscode-list-activeSelectionForeground);
 }
-.fila:active { transform: scale(.995); }
 .fila.es-head .resumen { font-weight: 600; }
 
-@keyframes entrar { from { opacity: 0; transform: translateY(4px); } }
+/* solo fundido: mover las filas, aunque sea un poco, rompe las líneas del grafo entre una y otra */
+@keyframes entrar { from { opacity: 0; } }
 
 .grafo { display: block; }
 .grafo, .carriles { width: var(--grafo, auto); overflow: hidden; }
@@ -163,19 +163,23 @@ body {
 .nodo.head { stroke: var(--vscode-foreground); }
 
 .texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
-.resumen { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resumen { flex: 1 1 0; min-width: 8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autor, .fecha { overflow: hidden; color: var(--suave); text-overflow: ellipsis; white-space: nowrap; }
 .seleccionada .autor, .seleccionada .fecha { color: inherit; opacity: .85; }
 
 .ref {
-  flex: none;
-  max-width: 14em;
-  padding: 1px 6px;
+  /* encoge antes de dejar el mensaje en nada; el nombre completo va en el title */
+  flex: 0 1 auto;
+  min-width: 3.5em;
+  max-width: 24em;
+  /* alto fijo y line-height en px: con uno relativo, Segoe UI deja el texto pegado al borde de abajo */
+  height: 18px;
+  padding: 0 7px;
   overflow: hidden;
   border: 1px solid currentColor;
-  border-radius: 10px;
-  font-size: .85em;
-  line-height: 1.4;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

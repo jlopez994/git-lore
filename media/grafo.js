@@ -88,6 +88,7 @@
 
   function insignia(ref, sha) {
     const e = el('span', `ref ${ref.esHead ? 'head' : ref.tipo}`, ref.nombre);
+    e.title = ref.nombre; // el chip se corta con «…» si el nombre es muy largo
     contexto(e, { webviewSection: ref.tipo, ref: ref.nombre, tipo: ref.tipo, esHead: ref.esHead, sha });
     return e;
   }
