@@ -146,7 +146,25 @@ function parsearWorktrees(texto) {
   }).filter(w => w.ruta && !w.bare && !w.huerfano);
 }
 
+// git shortlog -sne → autores por correo (la misma persona con dos nombres cuenta una vez, con el que más usa)
+function parsearShortlog(texto) {
+  const porCorreo = new Map();
+  for (const l of texto.split('\n')) {
+    const m = /^\s*(\d+)\t(.*?)\s*<([^>]*)>\s*$/.exec(l);
+    if (!m) { continue; }
+    const [, n, nombre, correo] = m;
+    const clave = correo.toLowerCase() || nombre;
+    const a = porCorreo.get(clave) || { nombre, correo, commits: 0, maxNombre: 0 };
+    a.commits += Number(n);
+    if (Number(n) > a.maxNombre) { a.nombre = nombre; a.maxNombre = Number(n); }
+    porCorreo.set(clave, a);
+  }
+  return [...porCorreo.values()].map(({ nombre, correo, commits }) => ({ nombre, correo, commits }))
+    .sort((a, b) => b.commits - a.commits || a.nombre.localeCompare(b.nombre));
+}
+
 module.exports = {
+  parsearShortlog,
   desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees,
   FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 };

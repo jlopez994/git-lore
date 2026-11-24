@@ -100,6 +100,41 @@ body {
 #fetch:active svg { transform: translateY(2px); }
 #fetch svg { transition: transform .2s var(--muelle); }
 .boton:disabled { opacity: .5; cursor: default; }
+#resaltar[aria-pressed="true"] { color: var(--vscode-focusBorder); background: var(--vscode-toolbar-activeBackground, var(--vscode-toolbar-hoverBackground)); }
+
+/* lo que no es historia de HEAD queda en segundo plano; las líneas no, que son las que llevan a tu rama */
+.fila > .texto, .fila > .autor, .fila > .fecha, .fila > .sha, .nodo { transition: opacity .2s ease-out; }
+.resaltar .fila.ajena > .texto, .resaltar .fila.ajena > .autor, .resaltar .fila.ajena > .fecha,
+.resaltar .fila.ajena > .sha, .resaltar .fila.ajena .nodo { opacity: .45; }
+.resaltar .fila.ajena:hover > *, .resaltar .fila.ajena.seleccionada > * { opacity: 1; }
+
+.aqui {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  max-width: min(60vw, 280px);
+  min-height: 32px;
+  padding: 0 14px;
+  overflow: hidden;
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+  font: inherit;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: aparecer .2s var(--salida);
+  transition: background .15s ease-out, transform .2s var(--muelle);
+}
+.aqui:hover { background: var(--vscode-button-hoverBackground); }
+.aqui:active { transform: scale(.95); }
+.aqui:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: 2px; }
+.fila.destello { animation: destello 1.2s var(--salida); }
+@keyframes destello { 0%, 30% { background: color-mix(in srgb, var(--vscode-focusBorder) 35%, transparent); } }
 
 .lista { padding-bottom: 8px; }
 
@@ -175,7 +210,8 @@ body {
 .c7 { stroke: var(--c7); --tinta: var(--c7); } .nodo.c7 { fill: var(--c7); }
 .nodo.head { stroke: var(--vscode-foreground); }
 
-.texto { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+/* holgura de 3px con margen negativo: el aro de la rama actual sobresale del chip y el overflow lo cortaría */
+.texto { display: flex; align-items: center; gap: 6px; min-width: 0; margin: -3px; padding: 3px; overflow: hidden; }
 .resumen { flex: 1 1 0; min-width: 8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .autor, .fecha { overflow: hidden; color: var(--suave); text-overflow: ellipsis; white-space: nowrap; }
 .seleccionada .autor, .seleccionada .fecha { color: inherit; opacity: .85; }
@@ -260,9 +296,9 @@ body {
   padding: 0 12px 0 8px;
   background: color-mix(in srgb, var(--vscode-list-activeSelectionBackground) 12%, var(--vscode-editor-background));
   border-bottom: 1px solid var(--borde);
-  animation: desplegar .22s var(--salida) both;
 }
-@keyframes desplegar { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+/* el detalle sale de golpe; la carga solo se ve si tarda: un commit ya visto o rápido no parpadea */
+.cuerpo.cargando { animation: aparecer .2s var(--salida) .15s both; }
 .carriles { display: block; height: 100%; }
 .carriles line { stroke-width: 2; stroke-linecap: round; }
 

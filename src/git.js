@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 const {
-  parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+  parsearBlame, parsearLog, parsearShortlog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
@@ -137,6 +137,41 @@ async function resolverRef(repo, ref) {
   }
 }
 
+// todas las refs con su commit: si cambia, algo se movió (fetch, push, ramas o tags creados fuera, un stash).
+// repo.state.refs no sirve: las versiones recientes de VS Code lo dejan vacío y cargan las refs bajo demanda
+// refs/stash es solo el de arriba: descartar uno intermedio solo se ve en la lista completa
+async function firmaDeRefs(repo) {
+  const raiz = repo.rootUri.fsPath;
+  const [refs, stash] = await Promise.all([
+    ejecutar(raiz, ['for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads', 'refs/remotes', 'refs/tags']),
+    ejecutar(raiz, ['stash', 'list', '--format=%H']),
+  ]);
+  return `${refs}\n${stash}`;
+}
+
+// el .git compartido por todos los worktrees: ahí viven las refs
+async function dirComun(repo) {
+  const salida = (await ejecutar(repo.rootUri.fsPath, ['rev-parse', '--git-common-dir'])).trim();
+  return path.resolve(repo.rootUri.fsPath, salida);
+}
+
+// HEAD explícito: sin revisión y sin terminal, shortlog se queda leyendo de la entrada estándar
+async function autores(repo) {
+  if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
+  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
+}
+
+// con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
+// sin correo git guarda «Nombre <>»: se ancla entera con regex escapada, o «Anabel» casaría con «Ana Anabel <>»
+async function commitsDeAutor(repo, autor, limite = 200) {
+  const escapar = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const patron = autor.correo
+    ? ['--fixed-strings', `--author=<${autor.correo}>`]
+    : ['--extended-regexp', `--author=^${escapar(autor.nombre)} <>$`];
+  return parsearLog(await ejecutar(repo.rootUri.fsPath,
+    ['log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+}
+
 async function stashes(repo) {
   return parsearStash(await ejecutar(repo.rootUri.fsPath, ['stash', 'list', `--format=${FORMATO_STASH}`]));
 }
@@ -220,5 +255,5 @@ function uriEnRevision(repo, ruta, ref) {
 
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
-  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, ErrorGit,
+  uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, commitsDeAutor, ErrorGit,
 };

@@ -15,6 +15,13 @@
   const fin = document.getElementById('fin');
   const refrescar = document.getElementById('refrescar');
   const traer = document.getElementById('fetch');
+  const botonResaltar = document.getElementById('resaltar');
+  const aqui = document.getElementById('aqui');
+  /** @type {{sha: string, nombre: string} | null} */
+  let actual = null;
+  let resaltar = (vscode.getState() || {}).resaltar !== false;
+  let buscandoHead = 0; // páginas que quedan por pedir buscando la fila de HEAD
+  let headInalcanzable = false; // se buscó y no está en este alcance: no se ofrece hasta la próxima recarga
   let filas = [];
   const porSha = new Map();
   let hayMas = false;
@@ -26,7 +33,9 @@
   /** @type {HTMLElement | null} */
   let detalle = null;
 
-  const x = c => c * CARRIL + CARRIL / 2;
+  // 1px de margen a la izquierda: el nodo del carril 0 crece al pasar el ratón y el grafo recorta lo que sale
+  const x = c => 1 + c * CARRIL + CARRIL / 2;
+  const anchoGrafo = () => anchoMax * CARRIL + 2;
   const y = v => v * ALTO;
   const esFila = n => n && n.classList.contains('fila') && !n.classList.contains('esqueleto');
 
@@ -40,7 +49,7 @@
   function svg(clase, alto) {
     const s = document.createElementNS(NS, 'svg');
     s.setAttribute('class', clase);
-    s.setAttribute('width', String(anchoMax * CARRIL));
+    s.setAttribute('width', String(anchoGrafo()));
     if (alto) { s.setAttribute('height', String(alto)); }
     s.setAttribute('aria-hidden', 'true');
     return s;
@@ -120,7 +129,10 @@
     r.setAttribute('role', 'listitem');
     r.tabIndex = 0;
     r.dataset.sha = f.sha;
-    r.style.setProperty('--retardo', `${Math.min(i, 20) * 30}ms`);
+    // la persiana cubre justo las filas que caben en pantalla (unos 450 ms en total); con un tope fijo de filas, en
+    // una pantalla alta todas las de debajo del tope entraban de golpe a media altura
+    const visibles = Math.ceil(innerHeight / ALTO) + 1;
+    r.style.setProperty('--retardo', `${Math.round(Math.min(i, visibles) * Math.min(30, 450 / visibles))}ms`);
     if (f.head) { r.classList.add('es-head'); }
     const texto = el('div', 'texto');
     f.refs.forEach(ref => texto.appendChild(insignia(ref, f.sha, f.col)));
@@ -170,6 +182,10 @@
     document.body.classList.toggle('filtrando', !!buscar.value.trim());
     filtrar();
     pedirMas();
+    // observe() sobre lo que ya se observa no vuelve a medir: se suelta y se vuelve a coger
+    if (observada) { vigia.unobserve(observada); }
+    observada = null;
+    vigilarHead();
   });
 
   alcance.addEventListener('change', () => {
@@ -210,6 +226,10 @@
     detalle = null;
   }
 
+  // un commit no cambia: lo ya cargado se reutiliza mientras viva la vista (con tope, por memoria)
+  const detallesVistos = new Map();
+  const TOPE_DETALLES = 200;
+
   function abrirDetalle(r) {
     const abierto = detalle && detalle.dataset.sha === r.dataset.sha;
     cerrarDetalle();
@@ -228,6 +248,8 @@
     detalle.append(carrilesDe(porSha.get(r.dataset.sha)), espera);
     r.after(detalle);
     r.setAttribute('aria-expanded', 'true');
+    const visto = detallesVistos.get(r.dataset.sha);
+    if (visto) { return pintarDetalle(visto); }
     vscode.postMessage({ tipo: 'detalle', sha: r.dataset.sha });
   }
 
@@ -282,7 +304,14 @@
       lista.replaceChildren(el('p', 'aviso', m.mensaje));
       return;
     }
-    if (m.tipo === 'detalle') { return pintarDetalle(m); }
+    if (m.tipo === 'detalle') {
+      if (!m.error) {
+        detallesVistos.delete(m.sha); // reinsertar lo deja el último en salir
+        detallesVistos.set(m.sha, m);
+        if (detallesVistos.size > TOPE_DETALLES) { detallesVistos.delete(detallesVistos.keys().next().value); }
+      }
+      return pintarDetalle(m);
+    }
     if (m.tipo === 'pendientes') {
       const r = lista.querySelector('.fila.pendiente .resumen');
       if (r) { r.textContent = m.texto; }
@@ -309,7 +338,7 @@
     }
     if (anchoMax !== antes && !m.reiniciar) {
       // carriles nuevos: todas las filas comparten ancho de grafo para que las columnas cuadren
-      lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoMax * CARRIL)));
+      lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoGrafo())));
     }
     ajustarAncho();
     filas = filas.concat(m.filas.filter(f => !f.pendiente && !f.stash)); // la cuenta es de commits
@@ -323,9 +352,88 @@
       abierta.classList.add('seleccionada');
       abrirDetalle(abierta);
     }
+    if (m.reiniciar) { actual = m.actual; headInalcanzable = false; }
+    marcarAjenas();
     filtrar();
+    if (buscandoHead) { seguirBuscandoHead(); }
+    vigilarHead();
     requestAnimationFrame(pedirMas); // una página que no llena la pantalla pide la siguiente
   });
+
+  // Con muchas ramas cuesta ver dónde estás: lo que no es historia de HEAD se atenúa (como el «mute» de Git Graph)
+  function marcarAjenas() {
+    const dentro = new Set();
+    const pila = actual ? [actual.sha] : [];
+    while (pila.length) {
+      const s = pila.pop();
+      if (dentro.has(s)) { continue; }
+      dentro.add(s);
+      const f = porSha.get(s);
+      if (f && f.padres) { pila.push(...f.padres); }
+    }
+    for (const r of lista.querySelectorAll('.fila:not(.esqueleto)')) {
+      const e = /** @type {HTMLElement} */ (r);
+      e.classList.toggle('ajena', !!actual && !e.dataset.pendiente && !dentro.has(e.dataset.sha));
+    }
+  }
+
+  function aplicarResaltado() {
+    document.body.classList.toggle('resaltar', resaltar);
+    botonResaltar.setAttribute('aria-pressed', String(resaltar));
+  }
+  botonResaltar.addEventListener('click', () => {
+    resaltar = !resaltar;
+    vscode.setState({ ...(vscode.getState() || {}), resaltar });
+    aplicarResaltado();
+  });
+  aplicarResaltado();
+
+  // píldora «estás aquí»: sale cuando la fila de HEAD no se ve, con la flecha hacia donde está
+  const filaHead = () => /** @type {HTMLElement | null} */ (lista.querySelector('.fila.es-head'));
+  let observada = null;
+  const vigia = new IntersectionObserver(([e]) => mostrarAqui(!e.isIntersecting, e.boundingClientRect.top < 0));
+  function vigilarHead() {
+    const r = filaHead();
+    if (r === observada) { return; }
+    if (observada) { vigia.unobserve(observada); }
+    observada = r;
+    if (r) { vigia.observe(r); } else { mostrarAqui(!!actual, false); }
+  }
+  function mostrarAqui(si, arriba) {
+    aqui.hidden = !si || !actual || headInalcanzable || !!buscar.value.trim();
+    if (aqui.hidden) { return; }
+    aqui.textContent = `${arriba ? '↑' : '↓'} ${actual.nombre}`;
+    aqui.title = T.irAqui;
+  }
+  function irAHead() {
+    const r = filaHead();
+    if (!r) {
+      buscandoHead = 20; // no está cargada: se piden páginas hasta dar con ella
+      return seguirBuscandoHead();
+    }
+    buscandoHead = 0;
+    const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    r.scrollIntoView({ block: 'center', behavior: quieto ? 'auto' : 'smooth' });
+    r.classList.remove('destello');
+    void r.offsetWidth;
+    r.classList.add('destello');
+    r.focus({ preventScroll: true });
+  }
+  function seguirBuscandoHead() {
+    if (filaHead()) { return irAHead(); }
+    if (!hayMas || buscandoHead <= 0) {
+      // sin más páginas no va a salir (un HEAD separado con «Ramas locales», por ejemplo)
+      if (!hayMas) { headInalcanzable = true; mostrarAqui(false, false); }
+      buscandoHead = 0;
+      return;
+    }
+    if (pidiendo) { return; }
+    buscandoHead--;
+    pidiendo = true;
+    fin.replaceChildren(...esqueletos(3));
+    vscode.postMessage({ tipo: 'mas' });
+  }
+  aqui.addEventListener('click', irAHead);
 
   function avisarCopiado(boton) {
     boton.classList.remove('copiado');
@@ -384,15 +492,15 @@
 
   // Con muchas ramas el grafo se comería la fila: se recorta a un tope y el borde se arrastra, como en Git Graph
   function ajustarAncho() {
-    const total = anchoMax * CARRIL;
-    const visible = Math.min(total, anchoUsuario || Math.max(6 * CARRIL, Math.round(innerWidth * 0.15)));
+    const total = anchoGrafo();
+    const visible = Math.min(total, anchoUsuario || Math.max(6 * CARRIL + 2, Math.round(innerWidth * 0.15)));
     document.body.style.setProperty('--grafo', `${visible}px`);
     document.body.classList.toggle('recortado', visible < total);
     tirador.setAttribute('aria-valuenow', String(visible));
   }
 
   function fijarAncho(px) {
-    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoMax * CARRIL, Math.round(px)));
+    anchoUsuario = px && Math.max(2 * CARRIL, Math.min(anchoGrafo(), Math.round(px)));
     ajustarAncho();
     vscode.setState({ ...(vscode.getState() || {}), anchoGrafo: anchoUsuario });
   }

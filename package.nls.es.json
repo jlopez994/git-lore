@@ -1,6 +1,6 @@
 {
   "displayName": "Git Lore",
-  "description": "Blame de Git, historial de fichero y de líneas, grafo de commits y comparación de ramas, libres y gratis. Sin cuenta ni muro de pago.",
+  "description": "Blame de Git, historial de fichero y de líneas, historial visual, navegación por revisiones, grafo de commits con acciones de ramas, stash y worktrees, y comparación de ramas, libres y gratis. Sin cuenta ni muro de pago.",
   "command.toggleFileBlame": "Alternar blame del fichero",
   "command.toggleCurrentLine": "Alternar blame de la línea actual",
   "command.fileHistory": "Ver historial del fichero",
@@ -42,5 +42,6 @@
   "command.graph.dropStash": "Descartar stash…",
   "command.graph.openWorktree": "Abrir worktree en una ventana nueva",
   "command.previousRevision": "Abrir la revisión anterior",
-  "command.nextRevision": "Abrir la revisión siguiente"
+  "command.nextRevision": "Abrir la revisión siguiente",
+  "view.contributors": "Colaboradores"
 }

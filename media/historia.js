@@ -21,6 +21,7 @@
   let anchoPintado = 0;
 
   const fmt = (s, ...v) => v.reduce((r, x, i) => r.replace(`{${i}}`, String(x)), s);
+  const cuantos = (n, uno, varios) => (n === 1 ? uno : fmt(varios, n));
   const lengua = document.documentElement.lang || undefined;
 
   function el(tag, clase, texto) {
@@ -82,7 +83,7 @@
       fila.dataset.fila = String(i);
       const nombre = a.color === null ? fmt(T.otros, a.otros) : a.nombre;
       fila.append(el('span', 'muestra'), el('span', 'nombre', nombre), el('span', 'cuenta', String(a.commits)));
-      fila.title = `${nombre} · ${fmt(T.commits, a.commits)}`;
+      fila.title = `${nombre} · ${cuantos(a.commits, T.unCommit, T.commits)}`;
       etiquetas.appendChild(fila);
     });
     const leyenda = el('div', 'autor leyenda-lineas');
@@ -157,7 +158,7 @@
     );
     const lineas = el('span', 'lineas');
     if (c.binario && !c.mas && !c.menos) { lineas.textContent = T.binario; } else { lineas.append(el('b', 'mas', `+${c.mas}`), el('b', 'menos', ` −${c.menos}`)); }
-    lineas.appendChild(el('code', '', ` ${c.sha.slice(0, 7)}`));
+    lineas.appendChild(el('code', '', c.sha.slice(0, 7))); // sin espacio dentro: VS Code le da fondo a code
     globo.appendChild(lineas);
     globo.hidden = false;
     const caja = ancla.getBoundingClientRect();
@@ -252,7 +253,8 @@
     datos = m;
     titulo.textContent = m.fichero;
     const desde = m.commits.length ? new Date(Math.min(...m.commits.map(c => c.fecha))).toLocaleDateString(lengua, { year: 'numeric', month: 'short' }) : '';
-    const partes = [fmt(T.commits, m.commits.length), fmt(T.autores, m.autores.reduce((n, a) => n + (a.otros || 1), 0))];
+    const personas = m.autores.reduce((n, a) => n + (a.otros || 1), 0);
+    const partes = [cuantos(m.commits.length, T.unCommit, T.commits), cuantos(personas, T.unAutor, T.autores)];
     if (desde) { partes.push(fmt(T.desde, desde)); }
     if (m.limitado) { partes.push(fmt(T.limite, m.commits.length)); }
     resumen.textContent = partes.join(' · ');
