@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.0
+
+- Contributors chart: a Contributors button in the status bar, next to Graph, opens it for the active repository.
+- Contributors chart: with many authors the bubbles get more room. The chart grows taller with the number of
+  people, the cloud follows the shape of the panel instead of stopping at three times as wide as tall, and in wide
+  panels it sits beside the table and stays in view while you scroll the list.
+
 ## 0.8.1
 
 - Commit graph: dimming the commits outside the history of your HEAD is now off by default and remembered, with the

@@ -3,7 +3,7 @@
   'use strict';
   const vscode = acquireVsCodeApi();
   const T = window.TEXTOS;
-  const { empaquetar, encajar } = /** @type {any} */ (window).BURBUJAS;
+  const { repartir } = /** @type {any} */ (window).BURBUJAS;
   const NS = 'http://www.w3.org/2000/svg';
   // a partir de aquí las burbujas serían puntos: el resto va junto en «otros»
   const MAX_BURBUJAS = 40;
@@ -26,7 +26,7 @@
   let grupos = [];
   /** @type {HTMLElement | null} */
   let lienzo = null;
-  let anchoPintado = 0;
+  let pintado = '';
 
   const fmt = (s, ...v) => v.reduce((r, x, i) => r.replace(`{${i}}`, String(x)), s);
   const cuantos = (n, uno, varios) => (n === 1 ? uno : fmt(varios, numero.format(n)));
@@ -66,10 +66,10 @@
   function dibujarBurbujas() {
     if (!lienzo) { return; }
     const ancho = Math.round(lienzo.clientWidth);
-    if (!ancho) { return; }
-    anchoPintado = ancho;
     const alto = Math.round(lienzo.clientHeight);
-    const sitios = encajar(empaquetar(grupos.map(g => Math.sqrt(g.commits)), { hueco: 0.06 * Math.sqrt(grupos[0].commits), aspecto: Math.min(3, Math.max(1, ancho / alto)) }), ancho, alto);
+    if (!ancho || !alto) { return; }
+    pintado = `${ancho}x${alto}`;
+    const sitios = repartir(grupos.map(g => Math.sqrt(g.commits)), ancho, alto, { hueco: 0.06 * Math.sqrt(grupos[0].commits) });
     const dibujo = svg('svg', { class: 'nube', width: ancho, height: alto, 'aria-hidden': 'true' });
     sitios.forEach((s, i) => {
       const g = grupos[i];
@@ -106,10 +106,12 @@
     reparto.removeAttribute('aria-busy');
     reparto.replaceChildren();
     const personas = datos.personas;
+    if (lienzo) { observador.unobserve(lienzo); }
     if (!personas.length) { lienzo = null; reparto.appendChild(el('p', 'aviso', T.sinCommits)); return; }
     total = personas.reduce((n, p) => n + p.commits, 0);
     grupos = agrupar(personas);
     lienzo = el('div', 'lienzo');
+    lienzo.style.setProperty('--burbujas', String(grupos.length));
 
     const tabla = el('table', 'lista');
     tabla.appendChild(el('caption', 'oculto', T.titulo));
@@ -149,7 +151,8 @@
     reparto.append(lienzo, tabla);
     reparto.classList.toggle('animar', animar && !quieto.matches);
     animar = false;
-    anchoPintado = 0; // lienzo nuevo: si ahora mide 0 (panel oculto), el ResizeObserver lo dibuja al volver
+    pintado = ''; // lienzo nuevo: si ahora mide 0 (panel oculto), el ResizeObserver lo dibuja al volver
+    observador.observe(lienzo);
     dibujarBurbujas();
   }
 
@@ -219,14 +222,16 @@
     if (destino) { e.preventDefault(); /** @type {HTMLElement} */ (destino).focus(); }
   });
 
-  // solo el ancho cambia el empaquetado; un panel abierto oculto mide 0 y se dibuja cuando tiene ancho
+  // el alto también depende de la ventana (vh); un panel abierto oculto mide 0 y se dibuja cuando se ve
   let espera;
-  new ResizeObserver(() => {
-    const w = lienzo ? Math.round(lienzo.clientWidth) : 0;
-    if (!w || w === anchoPintado) { return; }
+  const observador = new ResizeObserver(() => {
+    if (!lienzo) { return; }
+    const w = Math.round(lienzo.clientWidth);
+    const h = Math.round(lienzo.clientHeight);
+    if (!w || !h || `${w}x${h}` === pintado) { return; }
     clearTimeout(espera);
     espera = setTimeout(() => { ocultarGlobo(); dibujarBurbujas(); }, 80);
-  }).observe(reparto);
+  });
 
   window.addEventListener('message', ({ data: m }) => {
     if (m.tipo === 'error') {
