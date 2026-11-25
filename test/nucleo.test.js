@@ -283,15 +283,15 @@ test('burbujas: ninguna se solapa y todas caben en la caja', () => {
 test('burbujas: repartir llena cajas muy anchas o altas sin solaparse', () => {
   const { empaquetar, encajar, repartir } = require('../media/burbujas');
   const radios = Array.from({ length: 40 }, (_, i) => Math.sqrt(900 / Math.pow(i + 1, 1.1)));
-  for (const [ancho, alto] of [[1500, 420], [600, 900]]) {
+  for (const [ancho, alto] of [[1500, 300], [600, 900]]) {
     const sitios = repartir(radios, ancho, alto, { hueco: 1 });
     for (let i = 0; i < sitios.length; i++) {
       const a = sitios[i];
       assert.ok(a.x - a.r >= 3.9 && a.x + a.r <= ancho - 3.9 && a.y - a.r >= 3.9 && a.y + a.r <= alto - 3.9);
       for (let j = i + 1; j < sitios.length; j++) { assert.ok(Math.hypot(a.x - sitios[j].x, a.y - sitios[j].y) >= a.r + sitios[j].r - 1e-9); }
     }
-    // nunca peor que la espiral con la proporción de la caja tal cual
-    const directo = encajar(empaquetar(radios, { hueco: 1, aspecto: ancho / alto }), ancho, alto);
-    assert.ok(sitios[0].r >= directo[0].r);
+    // la espiral de antes, con la proporción acotada entre 1 y 3, deja más hueco en cajas así
+    const antes = encajar(empaquetar(radios, { hueco: 1, aspecto: Math.min(3, Math.max(1, ancho / alto)) }), ancho, alto);
+    assert.ok(sitios[0].r > antes[0].r * 1.1, `${ancho}×${alto}: ${sitios[0].r} frente a ${antes[0].r}`);
   }
 });
