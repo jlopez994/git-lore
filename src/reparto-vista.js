@@ -129,6 +129,19 @@ function registrar(context, protegido, log, repoDeContribuidores) {
     if (!repo) { return vscode.window.showWarningMessage(t('Open a folder with a git repository first')); }
     abrir(context, repo, log);
   })));
+
+  // junto al botón del grafo; sin repos abiertos no hay nada que contar
+  const boton = vscode.window.createStatusBarItem('gitLore.contributorsChart', vscode.StatusBarAlignment.Left);
+  boton.name = t('Contributors');
+  boton.text = `$(pie-chart) ${t('Contributors')}`;
+  boton.tooltip = t('Show Contributors Chart');
+  boton.command = 'gitLore.contributorsChart';
+  context.subscriptions.push(boton);
+  git.obtenerApi().then(api => {
+    const ver = () => (api.repositories.length ? boton.show() : boton.hide());
+    context.subscriptions.push(api.onDidOpenRepository(ver), api.onDidCloseRepository(ver));
+    ver();
+  }, () => { });
 }
 
 module.exports = { registrar };

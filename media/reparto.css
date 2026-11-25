@@ -31,7 +31,8 @@ body {
 }
 @keyframes brillo { to { background-position: -200% 0; } }
 
-.lienzo { height: var(--alto); min-width: 0; }
+/* crece con las burbujas: con 40 autores, 300 px dejan sin sitio los nombres de las medianas */
+.lienzo { height: clamp(var(--alto), calc(120px + var(--burbujas, 0) * 12px), 60vh); min-width: 0; }
 .nube { display: block; overflow: visible; }
 /* relleno tenue con borde del color: el texto va con la tinta del tema y se lee en claro y en oscuro */
 .burbuja { cursor: default; transform-box: fill-box; transform-origin: center; }
@@ -114,6 +115,11 @@ body {
 @keyframes brotar { from { transform: scale(0); opacity: 0; } }
 @keyframes crecer { from { transform: scaleX(0); } }
 
+/* en un panel ancho, la nube al lado de la tabla y quieta al bajar: la fila señalada sigue viendo su burbuja */
+@media (min-width: 1000px) {
+  .reparto:has(> .lienzo) { grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr); align-items: start; }
+  .lienzo { position: sticky; top: 16px; height: clamp(var(--alto), calc(120px + var(--burbujas, 0) * 12px), calc(100vh - 32px)); }
+}
 @media (max-width: 560px) {
   :root { --alto: 240px; }
   body { padding: 12px 8px 16px; }

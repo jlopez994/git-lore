@@ -5,7 +5,7 @@
   'use strict';
 
   // radios en cualquier unidad → centros {x, y, r} sin solaparse, alrededor de (0, 0). aspecto > 1 estira la
-  // espiral a lo ancho para llenar un panel apaisado
+  // espiral a lo ancho para llenar un panel apaisado, y < 1 a lo alto
   function empaquetar(radios, { hueco = 2, aspecto = 1 } = {}) {
     const sitios = [];
     const positivos = radios.filter(r => r > 0);
@@ -18,8 +18,8 @@
         // sin tope: la espiral acaba saliendo de todo lo ya colocado
         for (let a = 0; ; a += 0.05) {
           const d = paso * a;
-          x = d * Math.cos(a) * aspecto;
-          y = d * Math.sin(a);
+          x = d * Math.cos(a) * Math.max(1, aspecto);
+          y = d * Math.sin(a) * Math.max(1, 1 / aspecto);
           if (sitios.every(s => Math.hypot(s.x - x, s.y - y) >= s.r + r + hueco)) { break; }
         }
       }
@@ -40,5 +40,22 @@
     return sitios.map(s => ({ x: s.x * k + dx, y: s.y * k + dy, r: s.r * k }));
   }
 
-  exportar({ empaquetar, encajar });
+  // la nube no sale con la proporción que se pide a la espiral: se corrige con lo medido y se queda la que
+  // deja las burbujas más grandes
+  function repartir(radios, ancho, alto, { hueco = 2, margen = 4 } = {}) {
+    const caja = ancho / alto;
+    let aspecto = caja;
+    let mejor = null;
+    for (let i = 0; i < 3; i++) {
+      const sitios = empaquetar(radios, { hueco, aspecto });
+      const encajados = encajar(sitios, ancho, alto, margen);
+      if (!mejor || encajados[0].r > mejor[0].r) { mejor = encajados; }
+      const sale = (Math.max(...sitios.map(s => s.x + s.r)) - Math.min(...sitios.map(s => s.x - s.r)))
+        / (Math.max(...sitios.map(s => s.y + s.r)) - Math.min(...sitios.map(s => s.y - s.r)));
+      aspecto = Math.min(8, Math.max(1 / 8, aspecto * (caja / sale)));
+    }
+    return mejor;
+  }
+
+  exportar({ empaquetar, encajar, repartir });
 }(typeof module !== 'undefined' ? f => { module.exports = f; } : f => { /** @type {any} */ (window).BURBUJAS = f; }));
