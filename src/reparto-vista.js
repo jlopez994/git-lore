@@ -6,7 +6,7 @@ const vscode = require('vscode');
 const git = require('./git');
 const { claveDePersona } = require('./nucleo/parseo');
 const { COLORES } = require('./nucleo/historia');
-const { corto } = require('./acciones');
+const { corto, elegirRepo } = require('./acciones');
 
 const t = vscode.l10n.t;
 const paneles = new Map(); // raíz del repo → { panel, cargar }
@@ -120,13 +120,13 @@ function abrir(context, repo, log) {
   panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'));
 }
 
-// sin argumento va el repo que enseña la vista Contributors; desde la paleta sin esa vista, el del editor o el primero
-function registrar(context, protegido, log, repoDeContribuidores) {
-  context.subscriptions.push(vscode.commands.registerCommand('gitLore.contributorsChart', () => protegido(async () => {
+// como el grafo: el repo del editor activo y, sin él, se pregunta si hay varios
+function registrar(context, protegido, log) {
+  context.subscriptions.push(vscode.commands.registerCommand('gitLore.contributorsChart', arg => protegido(async () => {
     const api = await git.obtenerApi();
-    const editor = vscode.window.activeTextEditor;
-    const repo = repoDeContribuidores() || (editor && api.getRepository(editor.document.uri)) || api.repositories[0];
-    if (!repo) { return vscode.window.showWarningMessage(t('Open a folder with a git repository first')); }
+    if (!api.repositories.length) { return vscode.window.showWarningMessage(t('Open a folder with a git repository first')); }
+    const repo = (arg && arg.rootUri && api.getRepository(arg.rootUri)) || await elegirRepo();
+    if (!repo) { return; } // QuickPick cancelado
     abrir(context, repo, log);
   })));
 
