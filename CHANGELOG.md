@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1
+
+- Fix: with several repositories open, the Contributors chart no longer opens the first one without asking. Like the
+  commit graph, it uses the repository of the active editor and, without one, asks which repository to show.
+
 ## 0.9.0
 
 - Contributors chart: a Contributors button in the status bar, next to Graph, opens it for the active repository.

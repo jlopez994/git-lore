@@ -63,7 +63,8 @@ function activate(context) {
   grafo.registrar(context, protegido);
   historia.registrar(context, protegido, ficheroDelHistorial);
   revisiones.registrar(context, protegido);
-  reparto.registrar(context, protegido, log, contribuidores.registrar(context, log));
+  contribuidores.registrar(context, log);
+  reparto.registrar(context, protegido, log);
 }
 
 function deactivate() { }
