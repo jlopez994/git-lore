@@ -263,7 +263,9 @@
       return;
     }
     const info = el('div', 'info');
-    info.appendChild(el('p', 'mensaje', m.cuerpo));
+    const mensaje = el('p', 'mensaje', m.cuerpo);
+    mensaje.dataset.vscodeContext = JSON.stringify({ preventDefaultContextMenuItems: false }); // copiar el mensaje sí sirve
+    info.appendChild(mensaje);
     const meta = el('p', 'meta');
     meta.append(el('span', '', m.autor), el('span', '', m.fecha));
     if (m.padres.length) { meta.appendChild(el('span', 'padres', `${T.padres}: ${m.padres.join(', ')}`)); }
@@ -359,6 +361,12 @@
         if (detallesVistos.size > TOPE_DETALLES) { detallesVistos.delete(detallesVistos.keys().next().value); }
       }
       return pintarDetalle(m);
+    }
+    // aparte de cargando(): una acción que acaba no da por terminado un fetch o una recarga que siguen
+    if (m.tipo === 'ocupado') {
+      document.body.classList.toggle('ocupado', m.valor === true);
+      lista.setAttribute('aria-busy', String(m.valor === true || refrescar.classList.contains('girando')));
+      return;
     }
     if (m.tipo === 'pendientes') {
       const r = lista.querySelector('.fila.pendiente .resumen');

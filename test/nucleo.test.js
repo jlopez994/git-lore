@@ -359,3 +359,33 @@ test('identidades: juntar escribe un mailmap que git aplica, también encadenado
   assert.strictEqual(texto.split('\n').filter(l => l.includes('<ag@c.com>')).length, 1, texto);
   assert.strictEqual(g('log', '--fixed-strings', '--regexp-ignore-case', '--author=<ana@a.com>', '--format=%s').trim().split('\n').length, 5);
 });
+
+test('identidades: sugiere quién puede ser la misma persona y por qué', () => {
+  const { sugerencias, agrupar } = require('../src/nucleo/identidades');
+  const p = (nombre, correo, commits) => ({ nombre, correo, commits });
+  const iker = p('Iker Martínez', 'iker@empresa.com', 50);
+  const ikerM = p('Iker M', 'imartinez@gmail.com', 10);
+  const ana = p('Ana', 'ana.lopez@empresa.com', 30);
+  const anaGh = p('analopez', '123+analopez@users.noreply.github.com', 5);
+  const anaCasa = p('A. López', 'analopez@casa.es', 2);
+  const admin1 = p('Admin', 'admin@a.com', 3);
+  const admin2 = p('Servidor', 'admin@b.com', 3);
+  const otraBea = p('Bea', 'bea@a.com', 4);
+  const s = sugerencias([iker, ikerM, ana, anaGh, anaCasa, admin1, admin2, otraBea]);
+  const ver = s.map(x => `${x.origen.nombre}>${x.destino.nombre}:${x.motivo}:${x.fuerte}`).sort();
+  assert.deepStrictEqual(ver, [
+    'A. López>Ana:usuario:true',
+    'A. López>analopez:usuario:true',
+    'Iker M>Iker Martínez:parecido:false',
+    'analopez>Ana:usuario:true',
+  ]);
+  // un nombre de pila suelto puede ser un login, o no: se sugiere sin marcar
+  const [leo] = sugerencias([p('Leo', 'leo@a.com', 9), p('Leonardo Ruiz', 'leo@b.com', 1), p('Dan', 'x@a.com', 3), p('Otro', 'dan@b.com', 1)])
+    .filter(x => x.origen.nombre === 'Otro');
+  assert.strictEqual(leo.fuerte, false);
+  // A~B y B~C: una sola unión en la de más commits
+  const u = agrupar(s.filter(x => x.fuerte));
+  assert.strictEqual(u.length, 1);
+  assert.strictEqual(u[0].destino, ana);
+  assert.deepStrictEqual(new Set(u[0].origenes), new Set([anaGh, anaCasa]));
+});

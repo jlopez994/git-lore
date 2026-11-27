@@ -18,7 +18,7 @@ function html(webview, raizExt, nonce) {
     lineas: t('Lines changed'), desde: t('since {0}'), binario: t('binary'), limite: t('Showing the last {0} commits'),
   };
   return `<!doctype html>
-<html lang="${vscode.env.language}">
+<html lang="${vscode.env.language}" data-vscode-context='{"preventDefaultContextMenuItems": true}'>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">

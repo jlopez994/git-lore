@@ -29,7 +29,7 @@ function html(webview, raizExt, nonce, id, resaltar) {
     verCambios: t('Show in Source Control'), irAqui: t('Go to the current commit'), enWorktree: t('Checked out in worktree {0}'),
   };
   return `<!doctype html>
-<html lang="${vscode.env.language}">
+<html lang="${vscode.env.language}" data-vscode-context='{"preventDefaultContextMenuItems": true}'>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
@@ -38,7 +38,7 @@ function html(webview, raizExt, nonce, id, resaltar) {
 </head>
 <body>
 <header class="barra">
-  <input id="buscar" type="search" placeholder="${t('Filter by message, author, ref or SHA')}" aria-label="${t('Filter commits')}">
+  <input id="buscar" type="search" data-vscode-context='{"preventDefaultContextMenuItems": false}' placeholder="${t('Filter by message, author, ref or SHA')}" aria-label="${t('Filter commits')}">
   <select id="alcance" aria-label="${t('Branches to show')}">
     <option value="todas">${t('All branches')}</option>
     <option value="locales">${t('Local branches')}</option>
@@ -106,6 +106,9 @@ function abrir(context, repo) {
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
   const id = crypto.randomUUID();
+  // escrituras del ajuste de resaltar pedidas por este panel y sin acabar: sus avisos de cambio llegarían con el valor
+  // de un clic anterior y harían parpadear el botón
+  let resaltando = 0;
   let alcance = 'todas'; // aquí y no en el webview: si VS Code recrea el webview, se envía con las filas
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
   const textoPendientes = n => t('Uncommitted changes ({0})', n);
@@ -202,7 +205,13 @@ function abrir(context, repo) {
     clearTimeout(temporizador);
     return cargar(true, true);
   };
-  vistas.set(id, { repo, recargar });
+  // acciones de git en marcha en este panel: puede haber varias a la vez, la barra sigue hasta que acaba la última
+  let ocupadas = 0;
+  const ocupado = paso => {
+    ocupadas = Math.max(0, ocupadas + paso);
+    enviar({ tipo: 'ocupado', valor: ocupadas > 0 });
+  };
+  vistas.set(id, { repo, recargar, ocupado });
   const suscripciones = [
     repo.state.onDidChange(() => {
       const ahora = firmaActual();
@@ -227,11 +236,11 @@ function abrir(context, repo) {
       if (m.tipo === 'resaltar' && typeof m.valor === 'boolean') {
         const cfg = vscode.workspace.getConfiguration('gitLore');
         const enWorkspace = cfg.inspect(RESALTAR).workspaceValue !== undefined;
+        resaltando++;
         return cfg.update(RESALTAR, m.valor, enWorkspace ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global)
-          .then(undefined, e => {
-            vscode.window.showErrorMessage(e.message);
-            enviar({ tipo: 'resaltar', valor: resaltarAhora() }); // el botón cambió antes de guardar: vuelve al real
-          });
+          .then(undefined, e => { vscode.window.showErrorMessage(e.message); }) // sin esperar a que se cierre el aviso
+          // al acabar la última, el valor guardado de verdad: si alguna falló, el botón vuelve a él
+          .finally(() => { if (--resaltando === 0) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); } });
       }
       if (m.tipo === 'verCambios') { return vscode.commands.executeCommand('workbench.view.scm'); }
       if (m.tipo === 'fetch') {
@@ -250,7 +259,7 @@ function abrir(context, repo) {
       if (m.tipo === 'copiar') { return copiarSha(m.sha); }
     }),
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration(`gitLore.${RESALTAR}`)) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); }
+      if (e.affectsConfiguration(`gitLore.${RESALTAR}`) && !resaltando) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); }
     }),
   ];
 

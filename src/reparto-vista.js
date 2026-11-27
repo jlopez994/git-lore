@@ -10,8 +10,9 @@ const { corto, elegirRepo } = require('./acciones');
 
 const t = vscode.l10n.t;
 const paneles = new Map(); // raíz del repo → { panel, cargar }
+const repos = new Map(); // id opaco del panel → repo: el menú contextual dice de qué gráfico viene
 
-function html(webview, raizExt, nonce) {
+function html(webview, raizExt, nonce, id) {
   const recurso = f => webview.asWebviewUri(vscode.Uri.joinPath(raizExt, 'media', f));
   const textos = {
     commits: t('{0} commits'), unCommit: t('1 commit'), autores: t('{0} authors'), unAutor: t('1 author'), otros: t('Others ({0})'),
@@ -19,7 +20,7 @@ function html(webview, raizExt, nonce) {
     titulo: t('Share of commits per author'),
   };
   return `<!doctype html>
-<html lang="${vscode.env.language}">
+<html lang="${vscode.env.language}" data-vscode-context='{"preventDefaultContextMenuItems": true}'>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
@@ -34,7 +35,7 @@ function html(webview, raizExt, nonce) {
 </header>
 <main id="reparto" class="reparto" aria-busy="true"></main>
 <div id="globo" class="globo" role="tooltip" hidden></div>
-<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)};</script>
+<script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)};</script>
 <script nonce="${nonce}" src="${recurso('burbujas.js')}"></script>
 <script nonce="${nonce}" src="${recurso('reparto.js')}"></script>
 </body>
@@ -113,6 +114,8 @@ function abrir(context, repo, log) {
     cargar();
   });
 
+  const id = crypto.randomUUID();
+  repos.set(id, repo);
   paneles.set(raiz, { panel, cargar });
   const suscripcion = panel.webview.onDidReceiveMessage(m => {
     if (m && m.tipo === 'listo') { cargar(); }
@@ -120,12 +123,13 @@ function abrir(context, repo, log) {
   panel.onDidDispose(() => {
     cerrado = true;
     paneles.delete(raiz);
+    repos.delete(id);
     if (cancelar) { cancelar.cancel(); cancelar.dispose(); }
     vigia.dispose();
     vigiaMailmap.dispose();
     suscripcion.dispose();
   });
-  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'));
+  panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'), id);
 }
 
 // como el grafo: el repo del editor activo y, sin él, se pregunta si hay varios
@@ -152,4 +156,4 @@ function registrar(context, protegido, log) {
   }, () => { });
 }
 
-module.exports = { registrar };
+module.exports = { registrar, repoDePanel: id => repos.get(id) || null };
