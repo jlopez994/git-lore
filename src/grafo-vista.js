@@ -205,7 +205,13 @@ function abrir(context, repo) {
     clearTimeout(temporizador);
     return cargar(true, true);
   };
-  vistas.set(id, { repo, recargar, ocupado: valor => enviar({ tipo: 'ocupado', valor }) });
+  // acciones de git en marcha en este panel: puede haber varias a la vez, la barra sigue hasta que acaba la última
+  let ocupadas = 0;
+  const ocupado = paso => {
+    ocupadas = Math.max(0, ocupadas + paso);
+    enviar({ tipo: 'ocupado', valor: ocupadas > 0 });
+  };
+  vistas.set(id, { repo, recargar, ocupado });
   const suscripciones = [
     repo.state.onDidChange(() => {
       const ahora = firmaActual();
@@ -232,7 +238,7 @@ function abrir(context, repo) {
         const enWorkspace = cfg.inspect(RESALTAR).workspaceValue !== undefined;
         resaltando++;
         return cfg.update(RESALTAR, m.valor, enWorkspace ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global)
-          .then(undefined, e => vscode.window.showErrorMessage(e.message))
+          .then(undefined, e => { vscode.window.showErrorMessage(e.message); }) // sin esperar a que se cierre el aviso
           // al acabar la última, el valor guardado de verdad: si alguna falló, el botón vuelve a él
           .finally(() => { if (--resaltando === 0) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); } });
       }

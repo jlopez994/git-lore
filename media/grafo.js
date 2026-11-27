@@ -362,9 +362,10 @@
       }
       return pintarDetalle(m);
     }
+    // aparte de cargando(): una acción que acaba no da por terminado un fetch o una recarga que siguen
     if (m.tipo === 'ocupado') {
       document.body.classList.toggle('ocupado', m.valor === true);
-      cargando(m.valor === true);
+      lista.setAttribute('aria-busy', String(m.valor === true || refrescar.classList.contains('girando')));
       return;
     }
     if (m.tipo === 'pendientes') {

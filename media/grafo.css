@@ -409,7 +409,7 @@ body {
 @keyframes brillo { from { background-position: 100% 0, 0 0; } to { background-position: -50% 0, 0 0; } }
 
 /* gira el icono, no el botón: el fondo del hover es un cuadrado */
-.boton.girando svg { animation: girar .9s linear infinite; }
+.boton.girando svg, .ocupado #refrescar svg { animation: girar .9s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 
 .aviso { padding: 24px 12px; color: var(--suave); text-align: center; }
@@ -426,6 +426,6 @@ body {
   *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
   .grafo path { stroke-dashoffset: 0; }
   /* una animación infinita a 1 ms parpadearía */
-  .hueso, .boton.girando svg, .ocupado .barra::after { animation: none !important; }
+  .hueso, .boton.girando svg, .ocupado #refrescar svg, .ocupado .barra::after { animation: none !important; }
   .ocupado .barra::after { background: var(--vscode-progressBar-background); opacity: .6; }
 }

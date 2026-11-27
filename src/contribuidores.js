@@ -216,10 +216,11 @@ function registrar(context, protegido, log) {
       if (!pares.length) { return vscode.window.showInformationMessage(t('No likely duplicates found')); }
       const motivos = { nombre: t('Same name'), usuario: t('Same user in the email or login'), parecido: t('Similar name') };
       // las dudosas («Iker M» y «Iker Martínez») salen sin marcar: se juntan solo si se eligen
-      // la flecha apunta a quien se queda los commits al final: A~B y B~C acaban todos en el destino del grupo
-      const final = new Map(agrupar(pares).flatMap(u => [u.destino, ...u.origenes].map(p => [p, u.destino])));
+      // la flecha apunta a quien se queda los commits al final con lo que sale marcado: A~B y B~C acaban en el destino
+      // del grupo. Las dudosas, sin marcar, no cuentan para eso
+      const final = new Map(agrupar(pares.filter(s => s.fuerte)).flatMap(u => [u.destino, ...u.origenes].map(p => [p, u.destino])));
       const elegidas = await vscode.window.showQuickPick(pares.map(s => {
-        const destino = final.get(s.origen);
+        const destino = (s.fuerte && final.get(s.origen)) || s.destino;
         const van = [s.origen, s.destino].filter(p => p !== destino);
         return {
           label: `${van.map(p => p.nombre).join(' + ')} → ${destino.nombre}`,

@@ -138,20 +138,20 @@ function registrar(context, protegido, vistaDe) {
       if (!vista) { throw new Error(t('The Commit Graph is no longer open')); }
       // con: la parte que espera a git, con la barra del grafo y el aviso en la barra de estado. Las preguntas de
       // antes (nombre, confirmación) no cuentan. Dura hasta que el grafo ha recargado
-      let ocupado = false;
+      let veces = 0;
       const con = (titulo, fn) => {
-        ocupado = true;
-        vista.ocupado(true);
+        veces++;
+        vista.ocupado(1);
         return vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: titulo }, fn);
       };
       // crear o borrar una ref no cambia HEAD: el grafo no se enteraría solo. Cancelar no recarga (cerraría el detalle)
       try {
         if (await accion(vista.repo, arg, con) !== false) { await vista.recargar(); }
       } catch (e) {
-        await vista.recargar(); // un conflicto también cambia el repo
+        await vista.recargar().catch(() => { }); // un conflicto también cambia el repo; el error que cuenta es el de git
         throw motivo(e);
       } finally {
-        if (ocupado) { vista.ocupado(false); }
+        if (veces) { vista.ocupado(-veces); }
       }
     })));
   }
