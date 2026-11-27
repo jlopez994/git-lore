@@ -2,6 +2,8 @@
 
 ## 0.10.1
 
+- Contributors: a merge button appears when you hover a person, so `Merge Into…` no longer needs a right-click. On
+  identities with the same name as another, that button merges them in one click.
 - Contributors: with several repositories open, the repository button in the view's title picks which one to show,
   and the view stays on it (shown as pinned) until you choose `Follow the active editor` again. The choice is
   remembered per workspace. Without an editor from a repository, the view now shows the one selected in Source

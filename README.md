@@ -24,7 +24,7 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   bubble or a row for the details.
   - *Which repository:* the view follows the active editor. With several repositories open, the repository button in
     its title pins the one you want (and `Follow the active editor` unpins it).
-  - *Same person, several identities:* right-click a person and choose `Merge Into…` to count their commits as
+  - *Same person, several identities:* hover a person and click the merge button (or right-click it and choose `Merge Into…`) to count their commits as
     someone else's. Identities with the same name and a different email are flagged with a merge button that joins
     them in one click. Merges are stored in a private mailmap per repository, outside the repository, so nothing needs
     committing; the repository's own `.mailmap` still applies. `Edit Merged Identities` (in the view's `…` menu)

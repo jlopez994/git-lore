@@ -591,6 +591,11 @@
           "group": "inline@1"
         },
         {
+          "command": "gitLore.mergeContributor",
+          "when": "view == gitLore.contributors && viewItem == autor",
+          "group": "inline@1"
+        },
+        {
           "command": "gitLore.mergeSameName",
           "when": "view == gitLore.contributors && viewItem == autorDuplicado",
           "group": "1_autor@1"
