@@ -82,14 +82,15 @@ const clave = p => claveDePersona(p.correo, p.nombre);
 
 // los commits de origenes pasan a destino. Se remapean las identidades escritas en los commits, no las que se ven:
 // el mailmap no encadena, y lo que ya se había juntado con un origen tiene que seguirle
-// dos uniones seguidas leerían el mismo fichero y la segunda borraría la primera: van en cola, por repo
+// uniones y deshacer leen y reescriben el mismo fichero: en cola por repo, o uno borraría lo del otro
 const colas = new Map();
-function juntar(repo, origenes, destino) {
+function enCola(repo, fn) {
   const raiz = repo.rootUri.fsPath;
-  const hecha = (colas.get(raiz) || Promise.resolve()).then(() => juntarYa(repo, origenes, destino));
+  const hecha = (colas.get(raiz) || Promise.resolve()).then(fn);
   colas.set(raiz, hecha.catch(() => { }));
   return hecha;
 }
+const juntar = (repo, origenes, destino) => enCola(repo, () => juntarYa(repo, origenes, destino));
 
 async function juntarYa(repo, origenes, destino) {
   // git ignora una entrada sin correo de destino: no juntaría nada
@@ -109,9 +110,13 @@ async function avisarUnion(repo, origenes, destino, antes, escrito) {
   const deshacer = t('Undo');
   const r = await vscode.window.showInformationMessage(t('Merged {0} into {1}', origenes.map(p => p.nombre).join(', '), destino.nombre), deshacer);
   if (r !== deshacer) { return; }
-  // otra unión o una edición a mano mientras el aviso seguía abierto: deshacer las borraría
-  if (await git.leerMailmap(repo) !== escrito) { return vscode.window.showWarningMessage(t('The merged identities changed since then: edit them to undo')); }
-  await git.escribirMailmap(repo, antes);
+  const hecho = await enCola(repo, async () => {
+    // otra unión o una edición a mano mientras el aviso seguía abierto: deshacer las borraría
+    if (await git.leerMailmap(repo) !== escrito) { return false; }
+    await git.escribirMailmap(repo, antes);
+    return true;
+  });
+  if (!hecho) { vscode.window.showWarningMessage(t('The merged identities changed since then: edit them to undo')); }
 }
 
 function registrar(context, protegido, log) {

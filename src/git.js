@@ -179,11 +179,18 @@ async function conMailmap(repo) {
   if (!dirMailmap) { return []; }
   const privado = await leerMailmap(repo);
   if (!privado) { return []; }
-  const suyo = (await ejecutar(repo.rootUri.fsPath, ['config', '--type=path', '--get', 'mailmap.file']).catch(() => '')).trim();
+  // código 1: no está configurado. Otro error no puede pasar por «no hay», o se perdería el suyo sin avisar
+  const suyo = (await ejecutar(repo.rootUri.fsPath, ['config', '--type=path', '--get-all', 'mailmap.file'])
+    .catch(e => { if (e.codigo === 1) { return ''; } throw e; })).trim().split('\n').pop();
   if (!suyo) { return ['-c', `mailmap.file=${rutaMailmap(repo)}`]; }
-  const texto = await fs.promises.readFile(path.resolve(repo.rootUri.fsPath, suyo), 'utf8').catch(() => '');
+  const texto = `${await fs.promises.readFile(path.resolve(repo.rootUri.fsPath, suyo), 'utf8').catch(() => '')}\n${privado}`;
   const junto = rutaMailmap(repo).replace(/\.mailmap$/, '.junto');
-  await fs.promises.writeFile(junto, `${texto}\n${privado}`, 'utf8');
+  // varias consultas a la vez lo leen: solo se reescribe si cambia, y de golpe (rename), nunca a medias
+  if (await fs.promises.readFile(junto, 'utf8').catch(() => null) !== texto) {
+    const temporal = `${junto}.${crypto.randomUUID()}`;
+    await fs.promises.writeFile(temporal, texto, 'utf8');
+    await fs.promises.rename(temporal, junto);
+  }
   return ['-c', `mailmap.file=${junto}`];
 }
 
