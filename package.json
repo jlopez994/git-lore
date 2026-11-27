@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -289,6 +289,12 @@
         "title": "%command.editMergedContributors%",
         "category": "Git Lore",
         "icon": "$(edit)"
+      },
+      {
+        "command": "gitLore.contributorsRepository",
+        "title": "%command.contributorsRepository%",
+        "category": "Git Lore",
+        "icon": "$(repo)"
       }
     ],
     "menus": {
@@ -440,6 +446,10 @@
         {
           "command": "gitLore.editMergedContributors",
           "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "gitLore.contributorsRepository",
+          "when": "gitOpenRepositoryCount != 0"
         }
       ],
       "editor/title": [
@@ -514,6 +524,11 @@
       ],
       "view/title": [
         {
+          "command": "gitLore.contributorsRepository",
+          "when": "view == gitLore.contributors && gitOpenRepositoryCount > 1",
+          "group": "navigation@0"
+        },
+        {
           "command": "gitLore.visualFileHistory",
           "when": "view == gitLore.history",
           "group": "navigation@0"
@@ -573,6 +588,11 @@
         {
           "command": "gitLore.mergeSameName",
           "when": "view == gitLore.contributors && viewItem == autorDuplicado",
+          "group": "inline@1"
+        },
+        {
+          "command": "gitLore.mergeContributor",
+          "when": "view == gitLore.contributors && viewItem == autor",
           "group": "inline@1"
         },
         {

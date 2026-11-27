@@ -104,5 +104,8 @@
   "The merged identities changed since then: edit them to undo": "Las identidades juntadas han cambiado desde entonces: edítalas para deshacerlo",
   "Merged {0} into {1}": "{0} se ha juntado con {1}",
   "There is no one else to merge with": "No hay nadie más con quien juntar",
-  "Merge {0} into…": "Juntar {0} con…"
+  "Merge {0} into…": "Juntar {0} con…",
+  "{0} (pinned)": "{0} (fijado)",
+  "Follow the active editor": "Seguir el editor activo",
+  "Show contributors of…": "Ver colaboradores de…"
 }

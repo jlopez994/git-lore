@@ -48,5 +48,6 @@
   "config.graphHighlight": "Commit Graph: dim the commits that are not in the history of the current branch. The target button in the graph toolbar toggles it.",
   "command.mergeContributor": "Merge Into…",
   "command.mergeSameName": "Merge Identities with the Same Name",
-  "command.editMergedContributors": "Edit Merged Identities"
+  "command.editMergedContributors": "Edit Merged Identities",
+  "command.contributorsRepository": "Choose Repository"
 }

@@ -124,19 +124,37 @@ function registrar(context, protegido, log) {
   const vista = vscode.window.createTreeView('gitLore.contributors', { treeDataProvider: proveedor });
   proveedor.alFallar = mensaje => { vista.message = mensaje; };
   let api = null;
-  // el repo del editor activo; sin editor de un repo, el primero que haya
-  const elegir = () => {
+  // repo elegido a mano (su raíz): manda sobre el editor hasta que se vuelva a «seguir el editor». Por workspace
+  const FIJADO = 'gitLore.contributors.repo';
+  const fijado = () => {
+    const raiz = context.workspaceState.get(FIJADO);
+    return (raiz && api && api.repositories.find(r => r.rootUri.fsPath === raiz)) || null;
+  };
+  // el fijado; si no, el del editor activo; sin editor de un repo, el seleccionado en Source Control o el primero
+  // forzar: el usuario acaba de elegir repo, aunque el editor activo sea el de las identidades
+  const elegir = forzar => {
     if (!api) { return; }
     const ed = vscode.window.activeTextEditor;
-    if (ed && git.esMailmap(ed.document.uri.fsPath)) { return; } // está editando las identidades del repo de la vista
-    const repo = (ed && api.getRepository(ed.document.uri)) || api.repositories[0] || null;
+    if (forzar !== true && ed && git.esMailmap(ed.document.uri.fsPath)) { return; } // está editando las identidades del repo de la vista
+    const fijo = fijado();
+    const repo = fijo || (ed && api.getRepository(ed.document.uri)) || api.repositories.find(r => r.ui && r.ui.selected)
+      || api.repositories[0] || null;
+    const nombre = repo ? path.basename(repo.rootUri.fsPath) : '';
+    vista.description = fijo ? t('{0} (pinned)', nombre) : nombre;
     if (repo === proveedor.repo) { return; }
     proveedor.fijar(repo);
-    vista.description = repo ? path.basename(repo.rootUri.fsPath) : '';
   };
   git.obtenerApi().then(a => {
     api = a;
-    context.subscriptions.push(a.onDidOpenRepository(elegir), a.onDidCloseRepository(elegir));
+    // sin editor de un repo manda el seleccionado en Source Control: hay que enterarse cuando cambia
+    const selecciones = new Map();
+    const vigilar = r => { if (!selecciones.has(r) && r.ui && r.ui.onDidChange) { selecciones.set(r, r.ui.onDidChange(() => elegir())); } };
+    a.repositories.forEach(vigilar);
+    context.subscriptions.push(
+      a.onDidOpenRepository(r => { vigilar(r); elegir(); }),
+      a.onDidCloseRepository(r => { const s = selecciones.get(r); if (s) { s.dispose(); selecciones.delete(r); } elegir(); }),
+      { dispose: () => selecciones.forEach(s => s.dispose()) },
+    );
     elegir();
   }, e => log(`contributors: ${e.message}`));
   context.subscriptions.push(
@@ -144,6 +162,20 @@ function registrar(context, protegido, log) {
     { dispose: () => proveedor.vigia && proveedor.vigia.dispose() },
     vscode.window.onDidChangeActiveTextEditor(elegir),
     vscode.commands.registerCommand('gitLore.refreshContributors', () => proveedor.cambio.fire()),
+    vscode.commands.registerCommand('gitLore.contributorsRepository', () => protegido(async () => {
+      if (!api || !api.repositories.length) { return vscode.window.showWarningMessage(t('No git repository is open')); }
+      const fijo = fijado();
+      const elegido = await vscode.window.showQuickPick([
+        { label: `$(${fijo ? 'eye' : 'check'}) ${t('Follow the active editor')}`, repo: null },
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        ...api.repositories.map(r => ({
+          label: `$(${r === fijo ? 'pinned' : 'repo'}) ${path.basename(r.rootUri.fsPath)}`, description: r.rootUri.fsPath, repo: r,
+        })),
+      ], { placeHolder: t('Show contributors of…'), matchOnDescription: true });
+      if (!elegido) { return; }
+      await context.workspaceState.update(FIJADO, elegido.repo ? elegido.repo.rootUri.fsPath : undefined);
+      elegir(true);
+    })),
     git.onDidChangeMailmap(() => proveedor.cambio.fire()),
     vscode.commands.registerCommand('gitLore.mergeContributor', e => protegido(async () => {
       const repo = proveedor.repo;
