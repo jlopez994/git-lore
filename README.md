@@ -22,6 +22,11 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
   icon in its title or the Contributors button in the status bar (`Show Contributors Chart`) opens a bubble per
   person, sized by their commits, with a table of everyone's commits, share and lines added and deleted. Hover a
   bubble or a row for the details.
+  - *Same person, several identities:* right-click a person and choose `Merge Into…` to count their commits as
+    someone else's. Identities with the same name and a different email are flagged with a merge button that joins
+    them in one click. Merges are stored in a private mailmap per repository, outside the repository, so nothing needs
+    committing; the repository's own `.mailmap` still applies. `Edit Merged Identities` (in the view's `…` menu)
+    opens that file, to undo a merge or fix one by hand.
 - **Visual file history.** `Show Visual File History` (editor context menu, Explorer, or the icon in the File History
   view) puts every commit to a file on a timeline: one row per author, dots sized by the lines changed, and added and
   deleted lines underneath. Hover a dot for the commit, click it for its diff, or move between commits with the arrow
@@ -43,6 +48,8 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
     it, revert it or reset the current branch to it. Right-click a badge to check out, merge into the current branch or
     delete it; checking out a remote branch creates the local branch that tracks it. The toolbar button fetches from
     all remotes. Deleting and `reset --hard` ask first.
+  - *Staying up to date:* commits, checkouts, fetches and branches created from the terminal show up on their own. Only
+    the rows that changed are redrawn, so the scroll, the focused row and the open commit stay where they were.
   - *Stashes and worktrees:* stashes are rows on the commit they were made on (apply, pop or drop them from their
     menu). Branches checked out in another worktree carry a folder icon, a detached worktree gets its own badge, and
     you can open any of them in a new window.

@@ -55,6 +55,7 @@ function html(webview, raizExt, nonce, id, resaltar) {
 <div id="tirador" class="tirador" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="24"
   aria-label="${t('Graph width')}" title="${t('Drag to resize the graph, double-click to reset')}"></div>
 <script nonce="${nonce}">window.TEXTOS = ${JSON.stringify(textos)}; window.PANEL = ${JSON.stringify(id)}; window.RESALTAR = ${resaltar};</script>
+<script nonce="${nonce}" src="${recurso('filas.js')}"></script>
 <script nonce="${nonce}" src="${recurso('grafo.js')}"></script>
 </body>
 </html>`;
@@ -211,7 +212,7 @@ function abrir(context, repo) {
       }
       firma = ahora;
       clearTimeout(temporizador);
-      temporizador = setTimeout(() => cargar(true), 500);
+      temporizador = setTimeout(() => cargar(true, true), 500);
     }),
     panel.webview.onDidReceiveMessage(m => {
       if (!m || typeof m !== 'object') { return; }

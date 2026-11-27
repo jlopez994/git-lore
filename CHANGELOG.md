@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0
+
+- Contributors: merge identities that belong to the same person. Right-click a person and choose `Merge Into…`, or
+  use the merge button that appears next to identities with the same name and a different email. The view and the
+  chart count them as one. Merges live in a private mailmap per repository, outside the repository, and
+  `Edit Merged Identities` opens it to undo or adjust them. The repository's `.mailmap` still applies.
+- Commit graph: when the repository changes (a commit, a checkout, a fetch), only the rows that changed are redrawn.
+  The rest stay put, without flashing, and the scroll, the focused row and the open commit are kept.
+
 ## 0.9.1
 
 - Fix: with several repositories open, the Contributors chart no longer opens the first one without asking. Like the

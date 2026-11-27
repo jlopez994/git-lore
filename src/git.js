@@ -1,11 +1,12 @@
 'use strict';
 // Puerta única a git: la API de la extensión vscode.git y el binario que ella usa.
 const cp = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 const {
-  parsearBlame, parsearLog, parsearShortlog, parsearLineasPorAutor, FORMATO_AUTOR, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+  parsearBlame, parsearLog, parsearShortlog, parsearLineasPorAutor, FORMATO_AUTOR, parsearIdentidades, FORMATO_IDENTIDAD, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
@@ -155,17 +156,78 @@ async function dirComun(repo) {
   return path.resolve(repo.rootUri.fsPath, salida);
 }
 
+// Identidades juntadas desde la extensión: un mailmap privado por repo, fuera del repo y sin commit. git lo suma al
+// .mailmap del repo, así que shortlog, %aN/%aE y --author ya devuelven a cada persona junta
+let dirMailmap = null;
+const cambioMailmap = new vscode.EventEmitter();
+
+function fijarDirMailmap(dir) { dirMailmap = dir; }
+
+function rutaMailmap(repo) {
+  if (!dirMailmap) { throw new Error('mailmap folder not set'); }
+  const raiz = repo.rootUri.fsPath;
+  let real = raiz;
+  try { real = fs.realpathSync(raiz); } catch { /* sin realpath vale la ruta tal cual */ }
+  return path.join(dirMailmap, `${crypto.createHash('sha1').update(real).digest('hex').slice(0, 16)}.mailmap`);
+}
+
+const esMailmap = ruta => !!dirMailmap && path.dirname(ruta) === dirMailmap;
+
+// mailmap.file solo admite un valor: si el usuario ya tiene uno, se le pasa a git el suyo seguido del privado. Sin
+// identidades juntadas no se toca nada
+async function conMailmap(repo) {
+  if (!dirMailmap) { return []; }
+  const privado = await leerMailmap(repo);
+  if (!privado) { return []; }
+  // código 1: no está configurado. Otro error no puede pasar por «no hay», o se perdería el suyo sin avisar
+  const suyo = (await ejecutar(repo.rootUri.fsPath, ['config', '--type=path', '--get-all', 'mailmap.file'])
+    .catch(e => { if (e.codigo === 1) { return ''; } throw e; })).trim().split('\n').pop();
+  if (!suyo) { return ['-c', `mailmap.file=${rutaMailmap(repo)}`]; }
+  const texto = `${await fs.promises.readFile(path.resolve(repo.rootUri.fsPath, suyo), 'utf8').catch(() => '')}\n${privado}`;
+  // nombre por contenido: varias consultas a la vez lo leen y uno ya escrito no se toca nunca (en Windows no se puede
+  // reemplazar un fichero abierto). shortcut: los de contenidos viejos se quedan; son de bytes, limpiar si molesta
+  const junto = rutaMailmap(repo).replace(/\.mailmap$/, `.${crypto.createHash('sha1').update(texto).digest('hex').slice(0, 12)}.junto`);
+  if (!fs.existsSync(junto)) {
+    const temporal = `${junto}.${crypto.randomUUID()}`;
+    await fs.promises.writeFile(temporal, texto, 'utf8');
+    await fs.promises.rename(temporal, junto).catch(async e => {
+      await fs.promises.rm(temporal, { force: true });
+      if (!fs.existsSync(junto)) { throw e; } // otra consulta lo escribió a la vez: vale el suyo, es el mismo contenido
+    });
+  }
+  return ['-c', `mailmap.file=${junto}`];
+}
+
+async function leerMailmap(repo) {
+  try { return await fs.promises.readFile(rutaMailmap(repo), 'utf8'); } catch (e) {
+    if (e.code === 'ENOENT') { return ''; }
+    throw e;
+  }
+}
+
+async function escribirMailmap(repo, texto) {
+  const ruta = rutaMailmap(repo);
+  await fs.promises.mkdir(path.dirname(ruta), { recursive: true });
+  await fs.promises.writeFile(ruta, texto, 'utf8');
+  cambioMailmap.fire(repo.rootUri.fsPath);
+}
+
+// cada identidad escrita en algún commit, con la persona que es ahora: --all, porque el mapeo vale para todas las ramas
+async function identidades(repo) {
+  return parsearIdentidades(await ejecutar(repo.rootUri.fsPath, [...await conMailmap(repo), 'log', '--all', `--format=${FORMATO_IDENTIDAD}`]));
+}
+
 // HEAD explícito: sin revisión y sin terminal, shortlog se queda leyendo de la entrada estándar
 async function autores(repo) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
-  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
+  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, [...await conMailmap(repo), 'shortlog', '-sne', 'HEAD']));
 }
 
 // toda la historia de HEAD: en un repo grande tarda, por eso se puede cancelar. Los merges no suman líneas
 async function lineasPorAutor(repo, token) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return new Map(); }
   return parsearLineasPorAutor(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
+    [...await conMailmap(repo), 'log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
 }
 
 // con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
@@ -176,7 +238,7 @@ async function commitsDeAutor(repo, autor, limite = 200) {
     ? ['--fixed-strings', `--author=<${autor.correo}>`]
     : ['--extended-regexp', `--author=^${escapar(autor.nombre)} <>$`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+    [...await conMailmap(repo), 'log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
 }
 
 async function stashes(repo) {
@@ -263,4 +325,6 @@ function uriEnRevision(repo, ruta, ref) {
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
   uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, lineasPorAutor, commitsDeAutor, ErrorGit,
+  fijarDirMailmap, rutaMailmap, esMailmap, leerMailmap, escribirMailmap, identidades, onDidChangeMailmap: cambioMailmap.event,
+  avisarMailmap: raiz => cambioMailmap.fire(raiz),
 };

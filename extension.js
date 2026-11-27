@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 const vscode = require('vscode');
 const git = require('./src/git');
 const acciones = require('./src/acciones');
@@ -57,13 +58,14 @@ function activate(context) {
       return acciones.abrirCambios(repo, a);
     })),
   );
+  git.fijarDirMailmap(path.join(context.globalStorageUri.fsPath, 'mailmap'));
   blame.registrar(context, log);
   const ficheroDelHistorial = historial.registrar(context, log);
   comparar.registrar(context, protegido);
   grafo.registrar(context, protegido);
   historia.registrar(context, protegido, ficheroDelHistorial);
   revisiones.registrar(context, protegido);
-  contribuidores.registrar(context, log);
+  contribuidores.registrar(context, protegido, log);
   reparto.registrar(context, protegido, log);
 }
 

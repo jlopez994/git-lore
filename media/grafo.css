@@ -138,6 +138,8 @@ body {
 .aqui:hover { background: var(--vscode-button-hoverBackground); }
 .aqui:active { transform: scale(.95); }
 .aqui:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: 2px; }
+/* antes que .destello: una fila reutilizada no repite la entrada, pero sí el destello */
+.fila.asentada { animation: none; }
 .fila.destello { animation: destello 1.2s var(--salida); }
 @keyframes destello { 0%, 30% { background: color-mix(in srgb, var(--vscode-focusBorder) 35%, transparent); } }
 

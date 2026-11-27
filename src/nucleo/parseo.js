@@ -187,8 +187,18 @@ function parsearLineasPorAutor(texto) {
   return porClave;
 }
 
+// la identidad escrita en el commit y la que sale tras el mailmap: para juntar hay que remapear las de los commits
+const FORMATO_IDENTIDAD = `%ae${SEP_CAMPO}%an${SEP_CAMPO}%aE${SEP_CAMPO}%aN`;
+
+function parsearIdentidades(texto) {
+  return [...new Set(texto.split('\n').filter(Boolean))].map(l => {
+    const [correo, nombre, correoVisto, nombreVisto] = l.split(SEP_CAMPO);
+    return { correo, nombre, clave: claveDePersona(correoVisto, nombreVisto) };
+  });
+}
+
 module.exports = {
-  parsearShortlog, parsearLineasPorAutor, claveDePersona, FORMATO_AUTOR,
+  parsearShortlog, parsearLineasPorAutor, claveDePersona, FORMATO_AUTOR, parsearIdentidades, FORMATO_IDENTIDAD,
   desentrecomillar, parsearBlame, parsearLog, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees,
   FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 };

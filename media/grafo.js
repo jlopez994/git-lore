@@ -296,6 +296,49 @@
     detalle.lastElementChild.replaceWith(cuerpo);
   }
 
+  // Una recarga deja en su sitio las filas que no cambian: sin parpadeo, sin perder el scroll ni el foco. Mover un
+  // nodo reinicia su animación de entrada: .asentada la quita. Devuelve el sha del detalle a reabrir, si su fila cambió
+  function recolocar(nuevas) {
+    const previas = new Map(porSha);
+    const viejas = new Map([...lista.querySelectorAll('.fila:not(.esqueleto)')]
+      .map(r => [/** @type {HTMLElement} */ (r).dataset.sha, /** @type {HTMLElement} */ (r)]));
+    let creadas = 0;
+    const orden = nuevas.map(f => {
+      const r = viejas.get(f.sha);
+      if (!r || !/** @type {any} */ (window).FILAS.iguales(previas.get(f.sha), f)) { return fila(f, creadas++); }
+      viejas.delete(f.sha);
+      const fecha = r.querySelector('.fecha');
+      if (fecha) { fecha.textContent = f.fecha; }
+      if (f.pendiente) { const s = r.querySelector('.resumen'); s.textContent = f.resumen; s.title = f.resumen; }
+      r.classList.add('asentada');
+      return r;
+    });
+    const filaDetalle = detalle && detalle.previousElementSibling;
+    let reabrir = null;
+    if (detalle && !orden.includes(/** @type {HTMLElement} */ (filaDetalle))) {
+      reabrir = detalle.dataset.sha;
+      detalle.remove();
+      detalle = null;
+    }
+    // el detalle va pegado detrás de su fila: lo buscan con previousElementSibling
+    const sitio = orden.flatMap(r => (detalle && r === filaDetalle ? [r, detalle] : [r]));
+    const quedan = new Set(sitio);
+    [...lista.children].forEach(n => { if (!quedan.has(n)) { n.remove(); } });
+    let ref = lista.firstElementChild;
+    for (const n of sitio) {
+      if (n === ref) { ref = n.nextElementSibling; } else { lista.insertBefore(n, ref); }
+    }
+    filas = [];
+    porSha.clear();
+    nuevas.forEach(f => porSha.set(f.sha, f));
+    if (creadas === nuevas.length) {
+      // todo nuevo (primera carga, otro alcance, refrescar): los trazos se dibujan otra vez
+      document.body.classList.remove('dibujado');
+      requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('dibujado')));
+    }
+    return reabrir;
+  }
+
   window.addEventListener('message', ({ data: m }) => {
     if (m.tipo === 'resaltar') {
       resaltar = m.valor === true;
@@ -330,27 +373,22 @@
     const antes = anchoMax;
     // al recargar (otro alcance, tras una acción) el ancho se vuelve a medir: si no, solo crecería
     anchoMax = Math.max(m.reiniciar ? 1 : anchoMax, ...m.filas.map(f => f.ancho));
-    // una recarga (cambios en el repo, tras una acción) no debe cerrar el commit que se estaba mirando
-    const reabrir = m.reiniciar && detalle ? detalle.dataset.sha : null;
+    let reabrir = null;
     if (m.reiniciar) {
-      filas = [];
-      porSha.clear();
-      detalle = null;
       alcance.value = m.alcance;
-      lista.replaceChildren();
-      document.body.classList.remove('dibujado');
-      requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('dibujado')));
+      reabrir = recolocar(m.filas);
+    } else {
+      m.filas.forEach(f => porSha.set(f.sha, f));
+      const frag = document.createDocumentFragment();
+      m.filas.forEach((f, i) => frag.appendChild(fila(f, i)));
+      lista.appendChild(frag);
     }
-    if (anchoMax !== antes && !m.reiniciar) {
+    if (anchoMax !== antes) {
       // carriles nuevos: todas las filas comparten ancho de grafo para que las columnas cuadren
       lista.querySelectorAll('svg.grafo, svg.carriles').forEach(s => s.setAttribute('width', String(anchoGrafo())));
     }
     ajustarAncho();
     filas = filas.concat(m.filas.filter(f => !f.pendiente && !f.stash)); // la cuenta es de commits
-    m.filas.forEach(f => porSha.set(f.sha, f));
-    const frag = document.createDocumentFragment();
-    m.filas.forEach((f, i) => frag.appendChild(fila(f, i)));
-    lista.appendChild(frag);
     if (!filas.length) { lista.replaceChildren(el('p', 'aviso', T.sinCommits)); }
     const abierta = reabrir && [...lista.querySelectorAll('.fila')].find(r => (/** @type {HTMLElement} */ (r)).dataset.sha === reabrir);
     if (abierta) {
