@@ -49,5 +49,6 @@
   "command.mergeContributor": "Juntar con…",
   "command.mergeSameName": "Juntar las identidades con el mismo nombre",
   "command.editMergedContributors": "Editar identidades juntadas",
-  "command.contributorsRepository": "Elegir repositorio"
+  "command.contributorsRepository": "Elegir repositorio",
+  "command.suggestMerges": "Sugerir uniones"
 }

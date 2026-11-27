@@ -26,7 +26,9 @@ No account, no sign-in, no trial, no paywall, no telemetry. MIT licensed.
     its title pins the one you want (and `Follow the active editor` unpins it).
   - *Same person, several identities:* hover a person and click the merge button (or right-click it and choose `Merge Into…`) to count their commits as
     someone else's. Identities with the same name and a different email are flagged with a merge button that joins
-    them in one click. Merges are stored in a private mailmap per repository, outside the repository, so nothing needs
+    them in one click, and the lightbulb in the view's title suggests likely duplicates (same name, same email user,
+    GitHub `noreply` logins, similar names) for you to tick and merge together. In the chart, right-click a bubble or a
+    row to merge it. Merges are stored in a private mailmap per repository, outside the repository, so nothing needs
     committing; the repository's own `.mailmap` still applies. `Edit Merged Identities` (in the view's `…` menu)
     opens that file, to undo a merge or fix one by hand.
 - **Visual file history.** `Show Visual File History` (editor context menu, Explorer, or the icon in the File History

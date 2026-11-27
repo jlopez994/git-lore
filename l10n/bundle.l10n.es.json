@@ -107,5 +107,13 @@
   "Merge {0} into…": "Juntar {0} con…",
   "{0} (pinned)": "{0} (fijado)",
   "Follow the active editor": "Seguir el editor activo",
-  "Show contributors of…": "Ver colaboradores de…"
+  "Show contributors of…": "Ver colaboradores de…",
+  "Merged {0} groups of identities": "Se han juntado {0} grupos de identidades",
+  "1 possible duplicate: review it with the lightbulb": "1 posible duplicado: revísalo con la bombilla",
+  "{0} possible duplicates: review them with the lightbulb": "{0} posibles duplicados: revísalos con la bombilla",
+  "No likely duplicates found": "No hay duplicados probables",
+  "Same name": "Mismo nombre",
+  "Same user in the email or login": "Mismo usuario en el correo o el login",
+  "Similar name": "Nombre parecido",
+  "Merges to apply: the arrow points to who keeps the commits": "Uniones a aplicar: la flecha apunta a quien se queda los commits"
 }

@@ -263,7 +263,9 @@
       return;
     }
     const info = el('div', 'info');
-    info.appendChild(el('p', 'mensaje', m.cuerpo));
+    const mensaje = el('p', 'mensaje', m.cuerpo);
+    mensaje.dataset.vscodeContext = JSON.stringify({ preventDefaultContextMenuItems: false }); // copiar el mensaje sí sirve
+    info.appendChild(mensaje);
     const meta = el('p', 'meta');
     meta.append(el('span', '', m.autor), el('span', '', m.fecha));
     if (m.padres.length) { meta.appendChild(el('span', 'padres', `${T.padres}: ${m.padres.join(', ')}`)); }

@@ -34,6 +34,10 @@
     const p = (n / total) * 100;
     return p > 0 && p < 1 ? '<1%' : `${Math.round(p)}%`;
   };
+  // clic derecho sobre una persona: «Merge Into…» (package.json, webview/context)
+  const menuDe = (e, p) => {
+    e.dataset.vscodeContext = JSON.stringify({ webviewSection: 'persona', panel: window.PANEL, nombre: p.nombre, correo: p.correo, preventDefaultContextMenuItems: true });
+  };
   const tono = color => (color === null ? 'otros' : `c${color}`);
 
   function el(tag, clase, texto) {
@@ -75,6 +79,7 @@
       const g = grupos[i];
       const b = svg('g', { class: `burbuja ${tono(g.color)}` });
       b.dataset.b = String(i);
+      if (g.miembros.length === 1) { menuDe(b, g.miembros[0]); }
       b.style.setProperty('--retardo', `${Math.min(i, 30) * 25}ms`);
       b.appendChild(svg('circle', { cx: s.x, cy: s.y, r: Math.max(2, s.r - 1) }));
       if (s.r >= 28) {
@@ -128,6 +133,7 @@
     const max = personas[0].commits;
     personas.forEach((p, i) => {
       const fila = el('tr', `persona ${tono(p.color)}`);
+      menuDe(fila, p);
       fila.tabIndex = 0;
       fila.dataset.p = String(i);
       fila.dataset.b = String(Math.min(i, grupos.length - 1));

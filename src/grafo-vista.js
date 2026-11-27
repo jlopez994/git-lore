@@ -29,7 +29,7 @@ function html(webview, raizExt, nonce, id, resaltar) {
     verCambios: t('Show in Source Control'), irAqui: t('Go to the current commit'), enWorktree: t('Checked out in worktree {0}'),
   };
   return `<!doctype html>
-<html lang="${vscode.env.language}">
+<html lang="${vscode.env.language}" data-vscode-context='{"preventDefaultContextMenuItems": true}'>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
@@ -38,7 +38,7 @@ function html(webview, raizExt, nonce, id, resaltar) {
 </head>
 <body>
 <header class="barra">
-  <input id="buscar" type="search" placeholder="${t('Filter by message, author, ref or SHA')}" aria-label="${t('Filter commits')}">
+  <input id="buscar" type="search" data-vscode-context='{"preventDefaultContextMenuItems": false}' placeholder="${t('Filter by message, author, ref or SHA')}" aria-label="${t('Filter commits')}">
   <select id="alcance" aria-label="${t('Branches to show')}">
     <option value="todas">${t('All branches')}</option>
     <option value="locales">${t('Local branches')}</option>

@@ -2,7 +2,7 @@
   "name": "git-lore",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "publisher": "jlopez",
   "license": "MIT",
   "repository": {
@@ -295,6 +295,12 @@
         "title": "%command.contributorsRepository%",
         "category": "Git Lore",
         "icon": "$(repo)"
+      },
+      {
+        "command": "gitLore.suggestMerges",
+        "title": "%command.suggestMerges%",
+        "category": "Git Lore",
+        "icon": "$(lightbulb)"
       }
     ],
     "menus": {
@@ -450,6 +456,10 @@
         {
           "command": "gitLore.contributorsRepository",
           "when": "gitOpenRepositoryCount != 0"
+        },
+        {
+          "command": "gitLore.suggestMerges",
+          "when": "gitOpenRepositoryCount != 0"
         }
       ],
       "editor/title": [
@@ -547,6 +557,11 @@
           "command": "gitLore.compareRefs",
           "when": "view == gitLore.compare",
           "group": "navigation@2"
+        },
+        {
+          "command": "gitLore.suggestMerges",
+          "when": "view == gitLore.contributors",
+          "group": "navigation@0"
         },
         {
           "command": "gitLore.contributorsChart",
@@ -731,6 +746,11 @@
           "command": "gitLore.graph.openWorktree",
           "when": "webviewId == 'gitLore.graph' && webviewSection =~ /^(rama|worktree)$/ && worktree",
           "group": "1_rama@0"
+        },
+        {
+          "command": "gitLore.mergeContributor",
+          "when": "webviewId == 'gitLore.contributorsChart' && webviewSection == persona",
+          "group": "1_persona@1"
         }
       ]
     },
