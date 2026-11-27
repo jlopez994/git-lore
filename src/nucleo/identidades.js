@@ -6,14 +6,14 @@
 const normalizarNombre = n => (n || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 // personas, ya con el mailmap aplicado, que firman con el mismo nombre y distinto correo. Cada grupo conserva el orden
-// de entrada (shortlog: más commits primero), así que el primero es el destino natural
+// de entrada (shortlog: más commits primero). Sin ningún correo no hay a quién juntarlas: git ignora un destino sin él
 function gruposPorNombre(personas) {
   const grupos = new Map();
   for (const p of personas) {
     const n = normalizarNombre(p.nombre);
     if (n) { grupos.set(n, [...(grupos.get(n) || []), p]); }
   }
-  return [...grupos.values()].filter(g => g.length > 1);
+  return [...grupos.values()].filter(g => g.length > 1 && g.some(p => p.correo));
 }
 
 // git no deja < > ni saltos de línea en nombres y correos, pero el fichero se puede editar a mano
@@ -22,7 +22,8 @@ const limpio = s => String(s || '').replace(/[<>\r\n]/g, '').trim();
 // git busca cada entrada por nombre y correo del commit, sin distinguir mayúsculas
 const claveDeEntrada = (correo, nombre) => `${(nombre || '').toLowerCase()} <${(correo || '').toLowerCase()}>`;
 
-const LINEA = /^\s*([^<#]*?)\s*<([^>]*)>(?:\s*([^<#]*?)\s*<([^>]*)>)?/;
+// git admite # dentro de un nombre: solo es comentario la línea que empieza por #
+const LINEA = /^(?!\s*#)\s*([^<]*?)\s*<([^>]*)>(?:\s*([^<]*?)\s*<([^>]*)>)?/;
 
 function claveDeLinea(linea) {
   const m = LINEA.exec(linea);

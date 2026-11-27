@@ -173,8 +173,19 @@ function rutaMailmap(repo) {
 
 const esMailmap = ruta => !!dirMailmap && path.dirname(ruta) === dirMailmap;
 
-// un mailmap.file que no existe git lo ignora
-const conMailmap = repo => (dirMailmap ? ['-c', `mailmap.file=${rutaMailmap(repo)}`] : []);
+// mailmap.file solo admite un valor: si el usuario ya tiene uno, se le pasa a git el suyo seguido del privado. Sin
+// identidades juntadas no se toca nada
+async function conMailmap(repo) {
+  if (!dirMailmap) { return []; }
+  const privado = await leerMailmap(repo);
+  if (!privado) { return []; }
+  const suyo = (await ejecutar(repo.rootUri.fsPath, ['config', '--type=path', '--get', 'mailmap.file']).catch(() => '')).trim();
+  if (!suyo) { return ['-c', `mailmap.file=${rutaMailmap(repo)}`]; }
+  const texto = await fs.promises.readFile(path.resolve(repo.rootUri.fsPath, suyo), 'utf8').catch(() => '');
+  const junto = rutaMailmap(repo).replace(/\.mailmap$/, '.junto');
+  await fs.promises.writeFile(junto, `${texto}\n${privado}`, 'utf8');
+  return ['-c', `mailmap.file=${junto}`];
+}
 
 async function leerMailmap(repo) {
   try { return await fs.promises.readFile(rutaMailmap(repo), 'utf8'); } catch (e) {
@@ -192,20 +203,20 @@ async function escribirMailmap(repo, texto) {
 
 // cada identidad escrita en algún commit, con la persona que es ahora: --all, porque el mapeo vale para todas las ramas
 async function identidades(repo) {
-  return parsearIdentidades(await ejecutar(repo.rootUri.fsPath, [...conMailmap(repo), 'log', '--all', `--format=${FORMATO_IDENTIDAD}`]));
+  return parsearIdentidades(await ejecutar(repo.rootUri.fsPath, [...await conMailmap(repo), 'log', '--all', `--format=${FORMATO_IDENTIDAD}`]));
 }
 
 // HEAD explícito: sin revisión y sin terminal, shortlog se queda leyendo de la entrada estándar
 async function autores(repo) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
-  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, [...conMailmap(repo), 'shortlog', '-sne', 'HEAD']));
+  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, [...await conMailmap(repo), 'shortlog', '-sne', 'HEAD']));
 }
 
 // toda la historia de HEAD: en un repo grande tarda, por eso se puede cancelar. Los merges no suman líneas
 async function lineasPorAutor(repo, token) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return new Map(); }
   return parsearLineasPorAutor(await ejecutar(repo.rootUri.fsPath,
-    [...conMailmap(repo), 'log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
+    [...await conMailmap(repo), 'log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
 }
 
 // con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
@@ -216,7 +227,7 @@ async function commitsDeAutor(repo, autor, limite = 200) {
     ? ['--fixed-strings', `--author=<${autor.correo}>`]
     : ['--extended-regexp', `--author=^${escapar(autor.nombre)} <>$`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath,
-    [...conMailmap(repo), 'log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+    [...await conMailmap(repo), 'log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
 }
 
 async function stashes(repo) {

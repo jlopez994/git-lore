@@ -82,7 +82,16 @@ const clave = p => claveDePersona(p.correo, p.nombre);
 
 // los commits de origenes pasan a destino. Se remapean las identidades escritas en los commits, no las que se ven:
 // el mailmap no encadena, y lo que ya se había juntado con un origen tiene que seguirle
-async function juntar(repo, origenes, destino) {
+// dos uniones seguidas leerían el mismo fichero y la segunda borraría la primera: van en cola, por repo
+const colas = new Map();
+function juntar(repo, origenes, destino) {
+  const raiz = repo.rootUri.fsPath;
+  const hecha = (colas.get(raiz) || Promise.resolve()).then(() => juntarYa(repo, origenes, destino));
+  colas.set(raiz, hecha.catch(() => { }));
+  return hecha;
+}
+
+async function juntarYa(repo, origenes, destino) {
   // git ignora una entrada sin correo de destino: no juntaría nada
   if (!destino.correo) { throw new Error(t('{0} has no email: merge it the other way round', destino.nombre)); }
   const claves = new Set(origenes.map(clave));
@@ -92,6 +101,11 @@ async function juntar(repo, origenes, destino) {
   const base = antes || `# ${t('Git Lore: identities merged in {0}. Same format as .mailmap (git help mailmap).', repo.rootUri.fsPath)}\n`;
   const escrito = unirEnMailmap(base, crudas, destino);
   await git.escribirMailmap(repo, escrito);
+  // sin esperar al aviso: la cola no se queda parada en él
+  avisarUnion(repo, origenes, destino, antes, escrito).catch(e => vscode.window.showErrorMessage(e.message));
+}
+
+async function avisarUnion(repo, origenes, destino, antes, escrito) {
   const deshacer = t('Undo');
   const r = await vscode.window.showInformationMessage(t('Merged {0} into {1}', origenes.map(p => p.nombre).join(', '), destino.nombre), deshacer);
   if (r !== deshacer) { return; }

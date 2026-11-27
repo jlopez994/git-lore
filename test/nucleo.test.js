@@ -316,6 +316,16 @@ test('identidades: sugiere juntar quien firma con el mismo nombre y otro correo'
     { nombre: 'jose  perez', correo: 'jp@b.com', commits: 2 },
   ];
   assert.deepStrictEqual(gruposPorNombre(personas).map(g => g.map(p => p.correo)), [['jose@a.com', 'jp@b.com']]);
+  // sin ningún correo no hay destino posible: no se sugiere
+  assert.deepStrictEqual(gruposPorNombre([{ nombre: 'Ana', correo: '' }, { nombre: 'ana', correo: '' }]), []);
+});
+
+test('identidades: juntar otra vez sustituye la línea anterior, con # en el nombre o sin él', () => {
+  const { unirEnMailmap } = require('../src/nucleo/identidades');
+  const origen = [{ nombre: 'C# Dev', correo: 'C@x.com' }];
+  let texto = unirEnMailmap('# comentario <no@cuenta>\n', origen, { nombre: 'Ana', correo: 'a@x.com' });
+  texto = unirEnMailmap(texto, origen, { nombre: 'Bea', correo: 'b@x.com' });
+  assert.strictEqual(texto, '# comentario <no@cuenta>\nBea <b@x.com> C# Dev <C@x.com>\n');
 });
 
 test('identidades: juntar escribe un mailmap que git aplica, también encadenado', () => {
