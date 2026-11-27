@@ -124,15 +124,24 @@ function registrar(context, protegido, log) {
   const vista = vscode.window.createTreeView('gitLore.contributors', { treeDataProvider: proveedor });
   proveedor.alFallar = mensaje => { vista.message = mensaje; };
   let api = null;
-  // el repo del editor activo; sin editor de un repo, el primero que haya
+  // repo elegido a mano (su raíz): manda sobre el editor hasta que se vuelva a «seguir el editor». Por workspace
+  const FIJADO = 'gitLore.contributors.repo';
+  const fijado = () => {
+    const raiz = context.workspaceState.get(FIJADO);
+    return (raiz && api && api.repositories.find(r => r.rootUri.fsPath === raiz)) || null;
+  };
+  // el fijado; si no, el del editor activo; sin editor de un repo, el seleccionado en Source Control o el primero
   const elegir = () => {
     if (!api) { return; }
     const ed = vscode.window.activeTextEditor;
     if (ed && git.esMailmap(ed.document.uri.fsPath)) { return; } // está editando las identidades del repo de la vista
-    const repo = (ed && api.getRepository(ed.document.uri)) || api.repositories[0] || null;
+    const fijo = fijado();
+    const repo = fijo || (ed && api.getRepository(ed.document.uri)) || api.repositories.find(r => r.ui && r.ui.selected)
+      || api.repositories[0] || null;
+    const nombre = repo ? path.basename(repo.rootUri.fsPath) : '';
+    vista.description = fijo ? t('{0} (pinned)', nombre) : nombre;
     if (repo === proveedor.repo) { return; }
     proveedor.fijar(repo);
-    vista.description = repo ? path.basename(repo.rootUri.fsPath) : '';
   };
   git.obtenerApi().then(a => {
     api = a;
@@ -144,6 +153,20 @@ function registrar(context, protegido, log) {
     { dispose: () => proveedor.vigia && proveedor.vigia.dispose() },
     vscode.window.onDidChangeActiveTextEditor(elegir),
     vscode.commands.registerCommand('gitLore.refreshContributors', () => proveedor.cambio.fire()),
+    vscode.commands.registerCommand('gitLore.contributorsRepository', () => protegido(async () => {
+      if (!api || !api.repositories.length) { return vscode.window.showWarningMessage(t('No git repository is open')); }
+      const fijo = fijado();
+      const elegido = await vscode.window.showQuickPick([
+        { label: `$(${fijo ? 'eye' : 'check'}) ${t('Follow the active editor')}`, repo: null },
+        { label: '', kind: vscode.QuickPickItemKind.Separator },
+        ...api.repositories.map(r => ({
+          label: `$(${r === fijo ? 'pinned' : 'repo'}) ${path.basename(r.rootUri.fsPath)}`, description: r.rootUri.fsPath, repo: r,
+        })),
+      ], { placeHolder: t('Show contributors of…'), matchOnDescription: true });
+      if (!elegido) { return; }
+      await context.workspaceState.update(FIJADO, elegido.repo ? elegido.repo.rootUri.fsPath : undefined);
+      elegir();
+    })),
     git.onDidChangeMailmap(() => proveedor.cambio.fire()),
     vscode.commands.registerCommand('gitLore.mergeContributor', e => protegido(async () => {
       const repo = proveedor.repo;
