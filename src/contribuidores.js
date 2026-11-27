@@ -69,7 +69,7 @@ class Contribuidores {
         this.alFallar(undefined);
         const personas = await git.autores(repo);
         const grupoDe = new Map(gruposPorNombre(personas).flatMap(g => g.map(p => [p, g])));
-        this.alSugerir(sugerencias(personas).length);
+        this.alSugerir(sugerencias(personas).filter(s => s.fuerte).length); // las dudosas no se anuncian
         return personas.map(persona => ({ persona, repetido: grupoDe.has(persona), grupo: grupoDe.get(persona) }));
       }
       if (!e.persona) { return []; }
@@ -216,13 +216,19 @@ function registrar(context, protegido, log) {
       if (!pares.length) { return vscode.window.showInformationMessage(t('No likely duplicates found')); }
       const motivos = { nombre: t('Same name'), usuario: t('Same user in the email or login'), parecido: t('Similar name') };
       // las dudosas («Iker M» y «Iker Martínez») salen sin marcar: se juntan solo si se eligen
-      const elegidas = await vscode.window.showQuickPick(pares.map(s => ({
-        label: `${s.origen.nombre} → ${s.destino.nombre}`,
-        description: `${s.origen.correo || '<>'} → ${s.destino.correo}`,
-        detail: motivos[s.motivo],
-        picked: s.fuerte,
-        par: s,
-      })), { canPickMany: true, matchOnDescription: true, placeHolder: t('Merges to apply: the arrow points to who keeps the commits') });
+      // la flecha apunta a quien se queda los commits al final: A~B y B~C acaban todos en el destino del grupo
+      const final = new Map(agrupar(pares).flatMap(u => [u.destino, ...u.origenes].map(p => [p, u.destino])));
+      const elegidas = await vscode.window.showQuickPick(pares.map(s => {
+        const destino = final.get(s.origen);
+        const van = [s.origen, s.destino].filter(p => p !== destino);
+        return {
+          label: `${van.map(p => p.nombre).join(' + ')} → ${destino.nombre}`,
+          description: `${van.map(p => p.correo || '<>').join(' + ')} → ${destino.correo}`,
+          detail: motivos[s.motivo],
+          picked: s.fuerte,
+          par: s,
+        };
+      }), { canPickMany: true, matchOnDescription: true, placeHolder: t('Merges to apply: the arrow points to who keeps the commits') });
       if (elegidas && elegidas.length) { await juntarVarias(repo, agrupar(elegidas.map(x => x.par))); }
     })),
     // al de más commits: es el nombre y correo que más usa

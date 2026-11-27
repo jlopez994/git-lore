@@ -202,7 +202,7 @@ function abrir(context, repo) {
     clearTimeout(temporizador);
     return cargar(true, true);
   };
-  vistas.set(id, { repo, recargar });
+  vistas.set(id, { repo, recargar, ocupado: valor => enviar({ tipo: 'ocupado', valor }) });
   const suscripciones = [
     repo.state.onDidChange(() => {
       const ahora = firmaActual();

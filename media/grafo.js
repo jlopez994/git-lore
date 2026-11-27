@@ -362,6 +362,11 @@
       }
       return pintarDetalle(m);
     }
+    if (m.tipo === 'ocupado') {
+      document.body.classList.toggle('ocupado', m.valor === true);
+      cargando(m.valor === true);
+      return;
+    }
     if (m.tipo === 'pendientes') {
       const r = lista.querySelector('.fila.pendiente .resumen');
       if (r) { r.textContent = m.texto; }

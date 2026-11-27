@@ -379,6 +379,10 @@ test('identidades: sugiere quién puede ser la misma persona y por qué', () => 
     'Iker M>Iker Martínez:parecido:false',
     'analopez>Ana:usuario:true',
   ]);
+  // un nombre de pila suelto puede ser un login, o no: se sugiere sin marcar
+  const [leo] = sugerencias([p('Leo', 'leo@a.com', 9), p('Leonardo Ruiz', 'leo@b.com', 1), p('Dan', 'x@a.com', 3), p('Otro', 'dan@b.com', 1)])
+    .filter(x => x.origen.nombre === 'Otro');
+  assert.strictEqual(leo.fuerte, false);
   // A~B y B~C: una sola unión en la de más commits
   const u = agrupar(s.filter(x => x.fuerte));
   assert.strictEqual(u.length, 1);

@@ -85,9 +85,10 @@ function sugerencias(personas) {
     meter(n && `nombre:${n}`, p);
     const u = usuarioDe(p.correo);
     meter(u && `usuario:${u}`, p);
-    // un nombre sin espacios suele ser un login: casa con el usuario de otro correo
+    // un nombre sin espacios puede ser un login, pero también un nombre de pila («Ana» y ana@otra.com): sin marcar
     const c = compacto(p.nombre);
-    if (n && !n.includes(' ') && c.length >= 3 && !GENERICOS.has(c) && c !== u) { meter(`usuario:${c}`, p); }
+    if (n && !n.includes(' ') && c.length >= 3 && !GENERICOS.has(c) && c !== u) { meter(`login:${c}`, p); }
+    if (u) { meter(`login:${u}`, p); }
     meter(n && `pila:${n.split(' ')[0]}`, p);
   }
   for (const [k, grupo] of porClave) {
@@ -96,6 +97,8 @@ function sugerencias(personas) {
       for (let y = x + 1; y < grupo.length; y++) {
         if (motivo === 'pila') {
           if (nombresParecidos(grupo[x].nombre, grupo[y].nombre)) { anotar(grupo[x], grupo[y], 'parecido', false); }
+        } else if (motivo === 'login') {
+          anotar(grupo[x], grupo[y], 'usuario', false);
         } else {
           anotar(grupo[x], grupo[y], motivo, true);
         }

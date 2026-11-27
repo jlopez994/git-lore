@@ -115,5 +115,17 @@
   "Same name": "Mismo nombre",
   "Same user in the email or login": "Mismo usuario en el correo o el login",
   "Similar name": "Nombre parecido",
-  "Merges to apply: the arrow points to who keeps the commits": "Uniones a aplicar: la flecha apunta a quien se queda los commits"
+  "Merges to apply: the arrow points to who keeps the commits": "Uniones a aplicar: la flecha apunta a quien se queda los commits",
+  "Checking out {0}…": "Cambiando a {0}…",
+  "Creating branch {0}…": "Creando la rama {0}…",
+  "Creating tag {0}…": "Creando el tag {0}…",
+  "Merging {0}…": "Fusionando {0}…",
+  "Cherry-picking {0}…": "Aplicando {0} (cherry-pick)…",
+  "Reverting {0}…": "Revirtiendo {0}…",
+  "Resetting {0} to {1}…": "Reseteando {0} a {1}…",
+  "Deleting branch {0}…": "Borrando la rama {0}…",
+  "Applying stash…": "Aplicando el stash…",
+  "Popping stash…": "Sacando el stash…",
+  "Dropping stash…": "Descartando el stash…",
+  "Deleting tag {0}…": "Borrando el tag {0}…"
 }

@@ -43,41 +43,44 @@ async function confirmar(mensaje, detalle, boton) {
 }
 
 const ACCIONES = {
-  async checkout(repo, arg) {
-    if (arg.webviewSection === 'commit') { return repo.checkout(shaDe(arg)); }
+  async checkout(repo, arg, con) {
+    if (arg.webviewSection === 'commit') { return con(t('Checking out {0}…', corto(shaDe(arg))), () => repo.checkout(arg.sha)); }
     const { ref, refs } = await refDe(repo, arg, ['rama', 'remota', 'tag']);
     // el tag por su ref completa: con el nombre corto git preferiría una rama homónima
-    if (arg.tipo !== 'remota') { return repo.checkout(arg.tipo === 'tag' ? PREFIJO.tag + ref : ref); }
+    if (arg.tipo !== 'remota') { return con(t('Checking out {0}…', ref), () => repo.checkout(arg.tipo === 'tag' ? PREFIJO.tag + ref : ref)); }
     // origin/x → x local que sigue a origin/x (o la que ya había)
     const local = ramaLocalDe(ref, repo.state.remotes.map(r => r.name));
-    if (refs.some(r => r.completo === PREFIJO.rama + local)) { return repo.checkout(local); }
-    await repo.createBranch(local, true, ref);
-    return repo.setBranchUpstream(local, ref); // createBranch de la API la deja sin seguimiento
+    if (refs.some(r => r.completo === PREFIJO.rama + local)) { return con(t('Checking out {0}…', local), () => repo.checkout(local)); }
+    return con(t('Checking out {0}…', local), async () => {
+      await repo.createBranch(local, true, ref);
+      return repo.setBranchUpstream(local, ref); // createBranch de la API la deja sin seguimiento
+    });
   },
 
-  async createBranch(repo, arg) {
+  async createBranch(repo, arg, con) {
     const sha = shaDe(arg);
     const nombre = await pedirNombre(t('Create branch at {0}', corto(sha)));
     if (!nombre) { return false; }
-    return repo.createBranch(nombre, true, sha);
+    return con(t('Creating branch {0}…', nombre), () => repo.createBranch(nombre, true, sha));
   },
 
-  async createTag(repo, arg) {
+  async createTag(repo, arg, con) {
     const sha = shaDe(arg);
     const nombre = await pedirNombre(t('Create tag at {0}', corto(sha)));
     if (!nombre) { return false; }
-    return git.crearTag(repo, nombre, sha);
+    return con(t('Creating tag {0}…', nombre), () => git.crearTag(repo, nombre, sha));
   },
 
-  async merge(repo, arg) {
+  async merge(repo, arg, con) {
     const { ref } = await refDe(repo, arg, ['rama', 'remota']);
-    return repo.merge(PREFIJO[arg.tipo] + ref); // completa: una rama y un tag pueden llamarse igual
+    // completa: una rama y un tag pueden llamarse igual
+    return con(t('Merging {0}…', ref), () => repo.merge(PREFIJO[arg.tipo] + ref));
   },
 
-  cherryPick: (repo, arg) => git.cherryPick(repo, shaDe(arg)),
-  revert: (repo, arg) => git.revertir(repo, shaDe(arg)),
+  cherryPick: (repo, arg, con) => con(t('Cherry-picking {0}…', corto(shaDe(arg))), () => git.cherryPick(repo, arg.sha)),
+  revert: (repo, arg, con) => con(t('Reverting {0}…', corto(shaDe(arg))), () => git.revertir(repo, arg.sha)),
 
-  async reset(repo, arg) {
+  async reset(repo, arg, con) {
     const sha = shaDe(arg);
     const rama = (repo.state.HEAD && repo.state.HEAD.name) || 'HEAD';
     const modo = await vscode.window.showQuickPick([
@@ -88,29 +91,29 @@ const ACCIONES = {
     if (!modo) { return false; }
     if (modo.modo === 'hard' && !await confirmar(t('Reset {0} to {1} and discard all changes?', rama, corto(sha)),
       t('Uncommitted changes and the commits after {0} on this branch are lost.', corto(sha)), t('Reset'))) { return false; }
-    return git.resetear(repo, sha, modo.modo);
+    return con(t('Resetting {0} to {1}…', rama, corto(sha)), () => git.resetear(repo, sha, modo.modo));
   },
 
-  async deleteBranch(repo, arg) {
+  async deleteBranch(repo, arg, con) {
     const { ref } = await refDe(repo, arg, ['rama']);
     if (!await confirmar(t('Delete branch {0}?', ref), undefined, t('Delete'))) { return false; }
     try {
-      await repo.deleteBranch(ref, false);
+      await con(t('Deleting branch {0}…', ref), () => repo.deleteBranch(ref, false));
     } catch (e) {
       if (!e || e.gitErrorCode !== 'BranchNotFullyMerged') { throw e; }
       if (!await confirmar(t('Branch {0} is not fully merged. Delete it anyway?', ref),
         t('Its commits that are on no other branch can only be recovered from the reflog.'), t('Delete'))) { return false; }
-      await repo.deleteBranch(ref, true);
+      await con(t('Deleting branch {0}…', ref), () => repo.deleteBranch(ref, true));
     }
   },
 
-  applyStash: (repo, arg) => git.usarStash(repo, shaDe(arg), 'apply'),
-  popStash: (repo, arg) => git.usarStash(repo, shaDe(arg), 'pop'),
+  applyStash: (repo, arg, con) => con(t('Applying stash…'), () => git.usarStash(repo, shaDe(arg), 'apply')),
+  popStash: (repo, arg, con) => con(t('Popping stash…'), () => git.usarStash(repo, shaDe(arg), 'pop')),
 
-  async dropStash(repo, arg) {
+  async dropStash(repo, arg, con) {
     const sha = shaDe(arg);
     if (!await confirmar(t('Drop this stash?'), t('Its changes can only be recovered by hand from git fsck.'), t('Drop'))) { return false; }
-    return git.usarStash(repo, sha, 'drop');
+    return con(t('Dropping stash…'), () => git.usarStash(repo, sha, 'drop'));
   },
 
   // solo rutas que git da como worktree de este repo: el webview podría mandar cualquier cosa
@@ -121,10 +124,10 @@ const ACCIONES = {
     return false; // no cambia nada de este repo
   },
 
-  async deleteTag(repo, arg) {
+  async deleteTag(repo, arg, con) {
     const { ref } = await refDe(repo, arg, ['tag']);
     if (!await confirmar(t('Delete tag {0}?', ref), t('Only the local tag is deleted.'), t('Delete'))) { return false; }
-    return repo.deleteTag(ref);
+    return con(t('Deleting tag {0}…', ref), () => repo.deleteTag(ref));
   },
 };
 
@@ -133,15 +136,23 @@ function registrar(context, protegido, vistaDe) {
     context.subscriptions.push(vscode.commands.registerCommand(`gitLore.graph.${nombre}`, arg => protegido(async () => {
       const vista = arg && vistaDe(arg.panel);
       if (!vista) { throw new Error(t('The Commit Graph is no longer open')); }
+      // con: la parte que espera a git, con la barra del grafo y el aviso en la barra de estado. Las preguntas de
+      // antes (nombre, confirmación) no cuentan. Dura hasta que el grafo ha recargado
+      let ocupado = false;
+      const con = (titulo, fn) => {
+        ocupado = true;
+        vista.ocupado(true);
+        return vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: titulo }, fn);
+      };
       // crear o borrar una ref no cambia HEAD: el grafo no se enteraría solo. Cancelar no recarga (cerraría el detalle)
-      let hecho;
       try {
-        hecho = await accion(vista.repo, arg);
+        if (await accion(vista.repo, arg, con) !== false) { await vista.recargar(); }
       } catch (e) {
-        vista.recargar(); // un conflicto también cambia el repo
+        await vista.recargar(); // un conflicto también cambia el repo
         throw motivo(e);
+      } finally {
+        if (ocupado) { vista.ocupado(false); }
       }
-      if (hecho !== false) { vista.recargar(); }
     })));
   }
   context.subscriptions.push(vscode.commands.registerCommand('gitLore.graph.copySha', arg => protegido(() => copiarSha(shaDe(arg || {})))));
