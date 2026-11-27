@@ -184,12 +184,16 @@ async function conMailmap(repo) {
     .catch(e => { if (e.codigo === 1) { return ''; } throw e; })).trim().split('\n').pop();
   if (!suyo) { return ['-c', `mailmap.file=${rutaMailmap(repo)}`]; }
   const texto = `${await fs.promises.readFile(path.resolve(repo.rootUri.fsPath, suyo), 'utf8').catch(() => '')}\n${privado}`;
-  const junto = rutaMailmap(repo).replace(/\.mailmap$/, '.junto');
-  // varias consultas a la vez lo leen: solo se reescribe si cambia, y de golpe (rename), nunca a medias
-  if (await fs.promises.readFile(junto, 'utf8').catch(() => null) !== texto) {
+  // nombre por contenido: varias consultas a la vez lo leen y uno ya escrito no se toca nunca (en Windows no se puede
+  // reemplazar un fichero abierto). shortcut: los de contenidos viejos se quedan; son de bytes, limpiar si molesta
+  const junto = rutaMailmap(repo).replace(/\.mailmap$/, `.${crypto.createHash('sha1').update(texto).digest('hex').slice(0, 12)}.junto`);
+  if (!fs.existsSync(junto)) {
     const temporal = `${junto}.${crypto.randomUUID()}`;
     await fs.promises.writeFile(temporal, texto, 'utf8');
-    await fs.promises.rename(temporal, junto);
+    await fs.promises.rename(temporal, junto).catch(async e => {
+      await fs.promises.rm(temporal, { force: true });
+      if (!fs.existsSync(junto)) { throw e; } // otra consulta lo escribió a la vez: vale el suyo, es el mismo contenido
+    });
   }
   return ['-c', `mailmap.file=${junto}`];
 }
