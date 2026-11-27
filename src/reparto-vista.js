@@ -106,6 +106,13 @@ function abrir(context, repo, log) {
     cargar();
   });
 
+  // juntar dos identidades cambia commits y líneas de todos: lo ya contado no vale
+  const vigiaMailmap = git.onDidChangeMailmap(cual => {
+    if (cual && cual !== raiz) { return; }
+    hechas = null;
+    cargar();
+  });
+
   paneles.set(raiz, { panel, cargar });
   const suscripcion = panel.webview.onDidReceiveMessage(m => {
     if (m && m.tipo === 'listo') { cargar(); }
@@ -115,6 +122,7 @@ function abrir(context, repo, log) {
     paneles.delete(raiz);
     if (cancelar) { cancelar.cancel(); cancelar.dispose(); }
     vigia.dispose();
+    vigiaMailmap.dispose();
     suscripcion.dispose();
   });
   panel.webview.html = html(panel.webview, context.extensionUri, crypto.randomBytes(16).toString('base64'));

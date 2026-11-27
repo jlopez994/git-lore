@@ -1,11 +1,12 @@
 'use strict';
 // Puerta única a git: la API de la extensión vscode.git y el binario que ella usa.
 const cp = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 const {
-  parsearBlame, parsearLog, parsearShortlog, parsearLineasPorAutor, FORMATO_AUTOR, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
+  parsearBlame, parsearLog, parsearShortlog, parsearLineasPorAutor, FORMATO_AUTOR, parsearIdentidades, FORMATO_IDENTIDAD, parsearDiff, parsearNumstat, parsearStash, parsearWorktrees, FORMATO_LOG, FORMATO_SHA, FORMATO_STASH,
 } = require('./nucleo/parseo');
 const { webDeRemoto, elegirRemoto } = require('./nucleo/remotos');
 
@@ -155,17 +156,56 @@ async function dirComun(repo) {
   return path.resolve(repo.rootUri.fsPath, salida);
 }
 
+// Identidades juntadas desde la extensión: un mailmap privado por repo, fuera del repo y sin commit. git lo suma al
+// .mailmap del repo, así que shortlog, %aN/%aE y --author ya devuelven a cada persona junta
+let dirMailmap = null;
+const cambioMailmap = new vscode.EventEmitter();
+
+function fijarDirMailmap(dir) { dirMailmap = dir; }
+
+function rutaMailmap(repo) {
+  if (!dirMailmap) { throw new Error('mailmap folder not set'); }
+  const raiz = repo.rootUri.fsPath;
+  let real = raiz;
+  try { real = fs.realpathSync(raiz); } catch { /* sin realpath vale la ruta tal cual */ }
+  return path.join(dirMailmap, `${crypto.createHash('sha1').update(real).digest('hex').slice(0, 16)}.mailmap`);
+}
+
+const esMailmap = ruta => !!dirMailmap && path.dirname(ruta) === dirMailmap;
+
+// un mailmap.file que no existe git lo ignora
+const conMailmap = repo => (dirMailmap ? ['-c', `mailmap.file=${rutaMailmap(repo)}`] : []);
+
+async function leerMailmap(repo) {
+  try { return await fs.promises.readFile(rutaMailmap(repo), 'utf8'); } catch (e) {
+    if (e.code === 'ENOENT') { return ''; }
+    throw e;
+  }
+}
+
+async function escribirMailmap(repo, texto) {
+  const ruta = rutaMailmap(repo);
+  await fs.promises.mkdir(path.dirname(ruta), { recursive: true });
+  await fs.promises.writeFile(ruta, texto, 'utf8');
+  cambioMailmap.fire(repo.rootUri.fsPath);
+}
+
+// cada identidad escrita en algún commit, con la persona que es ahora: --all, porque el mapeo vale para todas las ramas
+async function identidades(repo) {
+  return parsearIdentidades(await ejecutar(repo.rootUri.fsPath, [...conMailmap(repo), 'log', '--all', `--format=${FORMATO_IDENTIDAD}`]));
+}
+
 // HEAD explícito: sin revisión y sin terminal, shortlog se queda leyendo de la entrada estándar
 async function autores(repo) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return []; }
-  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, ['shortlog', '-sne', 'HEAD']));
+  return parsearShortlog(await ejecutar(repo.rootUri.fsPath, [...conMailmap(repo), 'shortlog', '-sne', 'HEAD']));
 }
 
 // toda la historia de HEAD: en un repo grande tarda, por eso se puede cancelar. Los merges no suman líneas
 async function lineasPorAutor(repo, token) {
   if (!repo.state.HEAD || !repo.state.HEAD.commit) { return new Map(); }
   return parsearLineasPorAutor(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
+    [...conMailmap(repo), 'log', 'HEAD', '--no-merges', '--numstat', `--format=${FORMATO_AUTOR}`], { token }));
 }
 
 // con correo: «<correo>» literal (--fixed-strings: un «+» no es regex), sin distinguir mayúsculas como al agrupar.
@@ -176,7 +216,7 @@ async function commitsDeAutor(repo, autor, limite = 200) {
     ? ['--fixed-strings', `--author=<${autor.correo}>`]
     : ['--extended-regexp', `--author=^${escapar(autor.nombre)} <>$`];
   return parsearLog(await ejecutar(repo.rootUri.fsPath,
-    ['log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
+    [...conMailmap(repo), 'log', 'HEAD', '--regexp-ignore-case', ...patron, `-n${limite}`, `--format=${FORMATO_LOG}`]));
 }
 
 async function stashes(repo) {
@@ -263,4 +303,6 @@ function uriEnRevision(repo, ruta, ref) {
 module.exports = {
   ALCANCES, obtenerApi, repoDe, rutaRelativa, resolverRef, blame, mensaje, historial, lineasDeFichero, ficherosDeCommit, grafo, refs, diferencias, webDe,
   uriEnRevision, cherryPick, revertir, resetear, crearTag, restaurarFichero, stashes, worktrees, usarStash, firmaDeRefs, dirComun, autores, lineasPorAutor, commitsDeAutor, ErrorGit,
+  fijarDirMailmap, rutaMailmap, esMailmap, leerMailmap, escribirMailmap, identidades, onDidChangeMailmap: cambioMailmap.event,
+  avisarMailmap: raiz => cambioMailmap.fire(raiz),
 };

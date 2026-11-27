@@ -45,5 +45,8 @@
   "command.nextRevision": "Open Next Revision",
   "view.contributors": "Contributors",
   "command.contributorsChart": "Show Contributors Chart",
-  "config.graphHighlight": "Commit Graph: dim the commits that are not in the history of the current branch. The target button in the graph toolbar toggles it."
+  "config.graphHighlight": "Commit Graph: dim the commits that are not in the history of the current branch. The target button in the graph toolbar toggles it.",
+  "command.mergeContributor": "Merge Into…",
+  "command.mergeSameName": "Merge Identities with the Same Name",
+  "command.editMergedContributors": "Edit Merged Identities"
 }

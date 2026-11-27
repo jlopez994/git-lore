@@ -45,5 +45,8 @@
   "command.nextRevision": "Abrir la revisión siguiente",
   "view.contributors": "Colaboradores",
   "command.contributorsChart": "Ver gráfico de colaboradores",
-  "config.graphHighlight": "Grafo de commits: atenúa los commits que no están en la historia de la rama actual. El botón de la diana en la barra del grafo lo activa y desactiva."
+  "config.graphHighlight": "Grafo de commits: atenúa los commits que no están en la historia de la rama actual. El botón de la diana en la barra del grafo lo activa y desactiva.",
+  "command.mergeContributor": "Juntar con…",
+  "command.mergeSameName": "Juntar las identidades con el mismo nombre",
+  "command.editMergedContributors": "Editar identidades juntadas"
 }

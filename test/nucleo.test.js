@@ -307,3 +307,45 @@ test('filas: una recarga reutiliza solo las que no cambian', () => {
   const p = { sha: 'pendientes', pendiente: true, col: 0, segmentos: [], resumen: 'Cambios (1)' };
   assert.ok(iguales(p, { ...p, resumen: 'Cambios (2)' }));
 });
+
+test('identidades: sugiere juntar quien firma con el mismo nombre y otro correo', () => {
+  const { gruposPorNombre } = require('../src/nucleo/identidades');
+  const personas = [
+    { nombre: 'José Pérez', correo: 'jose@a.com', commits: 9 },
+    { nombre: 'Bea', correo: 'bea@a.com', commits: 5 },
+    { nombre: 'jose  perez', correo: 'jp@b.com', commits: 2 },
+  ];
+  assert.deepStrictEqual(gruposPorNombre(personas).map(g => g.map(p => p.correo)), [['jose@a.com', 'jp@b.com']]);
+});
+
+test('identidades: juntar escribe un mailmap que git aplica, también encadenado', () => {
+  const { parsearIdentidades, parsearShortlog, FORMATO_IDENTIDAD } = require('../src/nucleo/parseo');
+  const { unirEnMailmap } = require('../src/nucleo/identidades');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'git-lore-mm-'));
+  const mm = path.join(dir, 'privado.mailmap');
+  const g = (...args) => cp.execFileSync('git', ['-c', `mailmap.file=${mm}`, ...args], { cwd: dir, encoding: 'utf8' });
+  g('init', '-q', '-b', 'main');
+  // una entrada con nombre en el .mailmap del repo gana a una de solo correo: la unión tiene que llevar nombre
+  fs.writeFileSync(path.join(dir, '.mailmap'), 'Zed <z@z.com> A. García <ag@c.com>\n');
+  for (const [nombre, correo] of [['Ana', 'ana@a.com'], ['Ana', 'ana@a.com'], ['Anita', 'ana@b.com'], ['A. García', 'ag@c.com'], ['Sin correo', '']]) {
+    g('-c', `user.name=${nombre}`, '-c', `user.email=${correo}`, 'commit', '-q', '--allow-empty', '-m', nombre);
+  }
+  const personas = () => parsearShortlog(g('shortlog', '-sne', 'HEAD'));
+  const persona = correo => personas().find(p => p.correo === correo);
+  const juntar = (texto, origen, destino) => {
+    const crudas = parsearIdentidades(g('log', '--all', `--format=${FORMATO_IDENTIDAD}`))
+      .filter(i => i.clave === (origen.correo || origen.nombre).toLowerCase());
+    const nuevo = unirEnMailmap(texto, crudas, destino);
+    fs.writeFileSync(mm, nuevo);
+    return nuevo;
+  };
+  let texto = juntar('# cabecera\n', persona('z@z.com'), persona('ana@b.com'));
+  texto = juntar(texto, personas().find(p => p.nombre === 'Sin correo'), persona('ana@b.com'));
+  assert.deepStrictEqual(persona('ana@b.com'), { nombre: 'Anita', correo: 'ana@b.com', commits: 3 });
+  // lo ya juntado con Anita la sigue cuando Anita pasa a Ana: el mailmap de git no encadena
+  texto = juntar(texto, persona('ana@b.com'), persona('ana@a.com'));
+  assert.deepStrictEqual(personas(), [{ nombre: 'Ana', correo: 'ana@a.com', commits: 5 }]);
+  assert.ok(texto.startsWith('# cabecera\n'));
+  assert.strictEqual(texto.split('\n').filter(l => l.includes('<ag@c.com>')).length, 1, texto);
+  assert.strictEqual(g('log', '--fixed-strings', '--regexp-ignore-case', '--author=<ana@a.com>', '--format=%s').trim().split('\n').length, 5);
+});

@@ -96,5 +96,13 @@
   "Uncommitted changes to this file are lost.": "Se pierden los cambios sin commit de este fichero.",
   "Visual History": "Historial visual",
   "working tree": "árbol de trabajo",
-  "Working Tree": "Árbol de trabajo"
+  "Working Tree": "Árbol de trabajo",
+  "No commits found for {0}": "No hay commits de {0}",
+  "Git Lore: identities merged in {0}. Same format as .mailmap (git help mailmap).": "Git Lore: identidades juntadas en {0}. Mismo formato que .mailmap (git help mailmap).",
+  "Undo": "Deshacer",
+  "{0} has no email: merge it the other way round": "{0} no tiene correo: júntalo al revés",
+  "The merged identities changed since then: edit them to undo": "Las identidades juntadas han cambiado desde entonces: edítalas para deshacerlo",
+  "Merged {0} into {1}": "{0} se ha juntado con {1}",
+  "There is no one else to merge with": "No hay nadie más con quien juntar",
+  "Merge {0} into…": "Juntar {0} con…"
 }
