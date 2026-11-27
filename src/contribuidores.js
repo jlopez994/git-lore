@@ -131,10 +131,11 @@ function registrar(context, protegido, log) {
     return (raiz && api && api.repositories.find(r => r.rootUri.fsPath === raiz)) || null;
   };
   // el fijado; si no, el del editor activo; sin editor de un repo, el seleccionado en Source Control o el primero
-  const elegir = () => {
+  // forzar: el usuario acaba de elegir repo, aunque el editor activo sea el de las identidades
+  const elegir = forzar => {
     if (!api) { return; }
     const ed = vscode.window.activeTextEditor;
-    if (ed && git.esMailmap(ed.document.uri.fsPath)) { return; } // está editando las identidades del repo de la vista
+    if (forzar !== true && ed && git.esMailmap(ed.document.uri.fsPath)) { return; } // está editando las identidades del repo de la vista
     const fijo = fijado();
     const repo = fijo || (ed && api.getRepository(ed.document.uri)) || api.repositories.find(r => r.ui && r.ui.selected)
       || api.repositories[0] || null;
@@ -145,7 +146,15 @@ function registrar(context, protegido, log) {
   };
   git.obtenerApi().then(a => {
     api = a;
-    context.subscriptions.push(a.onDidOpenRepository(elegir), a.onDidCloseRepository(elegir));
+    // sin editor de un repo manda el seleccionado en Source Control: hay que enterarse cuando cambia
+    const selecciones = new Map();
+    const vigilar = r => { if (r.ui && r.ui.onDidChange) { selecciones.set(r, r.ui.onDidChange(() => elegir())); } };
+    a.repositories.forEach(vigilar);
+    context.subscriptions.push(
+      a.onDidOpenRepository(r => { vigilar(r); elegir(); }),
+      a.onDidCloseRepository(r => { const s = selecciones.get(r); if (s) { s.dispose(); selecciones.delete(r); } elegir(); }),
+      { dispose: () => selecciones.forEach(s => s.dispose()) },
+    );
     elegir();
   }, e => log(`contributors: ${e.message}`));
   context.subscriptions.push(
@@ -165,7 +174,7 @@ function registrar(context, protegido, log) {
       ], { placeHolder: t('Show contributors of…'), matchOnDescription: true });
       if (!elegido) { return; }
       await context.workspaceState.update(FIJADO, elegido.repo ? elegido.repo.rootUri.fsPath : undefined);
-      elegir();
+      elegir(true);
     })),
     git.onDidChangeMailmap(() => proveedor.cambio.fire()),
     vscode.commands.registerCommand('gitLore.mergeContributor', e => protegido(async () => {
