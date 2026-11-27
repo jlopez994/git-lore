@@ -295,3 +295,15 @@ test('burbujas: repartir llena cajas muy anchas o altas sin solaparse', () => {
     assert.ok(sitios[0].r > antes[0].r * 1.1, `${ancho}×${alto}: ${sitios[0].r} frente a ${antes[0].r}`);
   }
 });
+
+test('filas: una recarga reutiliza solo las que no cambian', () => {
+  const { iguales } = require('../media/filas');
+  const f = { sha: 'a', col: 0, ancho: 1, segmentos: [{ x1: 0, y1: 0.5, x2: 0, y2: 1, carril: 0 }], resumen: 'uno', fecha: 'hace 1 min', refs: [] };
+  assert.ok(iguales(f, { ...f, fecha: 'hace 2 min' }));
+  assert.ok(!iguales(undefined, f));
+  assert.ok(!iguales(f, { ...f, col: 1 }));
+  assert.ok(!iguales(f, { ...f, refs: [{ nombre: 'main', tipo: 'rama', esHead: true }] }));
+  assert.ok(!iguales(f, { ...f, resumen: 'dos' }));
+  const p = { sha: 'pendientes', pendiente: true, col: 0, segmentos: [], resumen: 'Cambios (1)' };
+  assert.ok(iguales(p, { ...p, resumen: 'Cambios (2)' }));
+});
