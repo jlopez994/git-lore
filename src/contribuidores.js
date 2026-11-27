@@ -148,7 +148,7 @@ function registrar(context, protegido, log) {
     api = a;
     // sin editor de un repo manda el seleccionado en Source Control: hay que enterarse cuando cambia
     const selecciones = new Map();
-    const vigilar = r => { if (r.ui && r.ui.onDidChange) { selecciones.set(r, r.ui.onDidChange(() => elegir())); } };
+    const vigilar = r => { if (!selecciones.has(r) && r.ui && r.ui.onDidChange) { selecciones.set(r, r.ui.onDidChange(() => elegir())); } };
     a.repositories.forEach(vigilar);
     context.subscriptions.push(
       a.onDidOpenRepository(r => { vigilar(r); elegir(); }),
