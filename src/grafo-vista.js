@@ -106,6 +106,9 @@ function abrir(context, repo) {
   let generacion = 0; // una recarga deja obsoleta cualquier página en camino
   let cerrado = false;
   const id = crypto.randomUUID();
+  // escrituras del ajuste de resaltar pedidas por este panel y sin acabar: sus avisos de cambio llegarían con el valor
+  // de un clic anterior y harían parpadear el botón
+  let resaltando = 0;
   let alcance = 'todas'; // aquí y no en el webview: si VS Code recrea el webview, se envía con las filas
   const enviar = m => { if (!cerrado) { panel.webview.postMessage(m).then(undefined, () => { }); } };
   const textoPendientes = n => t('Uncommitted changes ({0})', n);
@@ -227,11 +230,11 @@ function abrir(context, repo) {
       if (m.tipo === 'resaltar' && typeof m.valor === 'boolean') {
         const cfg = vscode.workspace.getConfiguration('gitLore');
         const enWorkspace = cfg.inspect(RESALTAR).workspaceValue !== undefined;
+        resaltando++;
         return cfg.update(RESALTAR, m.valor, enWorkspace ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global)
-          .then(undefined, e => {
-            vscode.window.showErrorMessage(e.message);
-            enviar({ tipo: 'resaltar', valor: resaltarAhora() }); // el botón cambió antes de guardar: vuelve al real
-          });
+          .then(undefined, e => vscode.window.showErrorMessage(e.message))
+          // al acabar la última, el valor guardado de verdad: si alguna falló, el botón vuelve a él
+          .finally(() => { if (--resaltando === 0) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); } });
       }
       if (m.tipo === 'verCambios') { return vscode.commands.executeCommand('workbench.view.scm'); }
       if (m.tipo === 'fetch') {
@@ -250,7 +253,7 @@ function abrir(context, repo) {
       if (m.tipo === 'copiar') { return copiarSha(m.sha); }
     }),
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration(`gitLore.${RESALTAR}`)) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); }
+      if (e.affectsConfiguration(`gitLore.${RESALTAR}`) && !resaltando) { enviar({ tipo: 'resaltar', valor: resaltarAhora() }); }
     }),
   ];
 

@@ -9,6 +9,8 @@
 - Contributors chart: right-click a bubble or a row to merge that person into someone else.
 - Commit graph: checkout, merge, cherry-pick, reset and the other actions show that they are working: a bar runs along
   the toolbar, the refresh icon spins and the status bar says what is going on, until the graph has reloaded.
+- Commit graph: clicking the highlight button several times in a row no longer makes it flash back to the previous
+  state before settling.
 - Contributors: merge notices name the emails too, so two people with the same name can be told apart.
 - Contributors chart, Visual File History and commit graph: right-clicking no longer offers Cut, Copy and Paste where
   there is nothing to cut or paste. The graph's filter box and a commit's message keep them.
